@@ -1,0 +1,69 @@
+# Imports:
+import os.path
+import argparse
+
+from rl.callbacks import (
+    FileLogger,
+    ModelIntervalCheckpoint,
+)
+
+from minecraft_deep_learning.model import (
+    build_environment,
+    build_agent,
+)
+from minecraft_deep_learning.constants import (
+    NUM_STEPS,
+    LOG_INTERVAL,
+    TESTING_EPISODES,
+    WEIGHTS_DIR,
+)
+
+# Argument parser:
+final_weights_file = os.path.join(WEIGHTS_DIR, "weights_final.h5f")
+
+arguments = argparse.ArgumentParser()
+arguments.add_argument("--mode", choices=["train", "test", "debug"], default="train")
+arguments.add_argument("--weights", type=str, default=final_weights_file)
+
+# Argument handler:
+def main(raw_args=None):
+    if raw_args is None:
+        args = arguments.parse_args()
+    else:
+        args = arguments.parse_args(raw_args)
+
+    env = build_environment()
+    agent = build_agent(env)
+
+    if args.mode == "debug":
+        env.render()
+        action = env.action_space.sample()
+        obs, reward, done, info = env.step(action)
+        import pdb
+        pdb.set_trace()
+
+    elif args.mode == "train":
+        callbacks = [
+            ModelIntervalCheckpoint(
+                os.path.join(WEIGHTS_DIR, "weights_{step}.h5f"),
+                interval=LOG_INTERVAL,
+            ),
+            FileLogger(
+                os.path.join(WEIGHTS_DIR, "log.json"),
+                interval=LOG_INTERVAL,
+            ),
+        ]
+        agent.fit(
+            env,
+            callbacks=callbacks,
+            nb_steps=NUM_STEPS,
+            log_interval=LOG_INTERVAL,
+        )
+        agent.save_weights(final_weights_file, overwrite=True)
+
+    elif args.mode == "test":
+        agent.load_weights(args.weights)
+        agent.test(env, nb_episodes=TESTING_EPISODES)
+
+    else:
+        raise ValueError("unknown --mode {!r}".format(args.mode))

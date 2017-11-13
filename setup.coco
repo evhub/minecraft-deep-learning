@@ -1,0 +1,26 @@
+import setuptools
+
+import sys
+import os.path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from minecraft_deep_learning.constants import (
+    NAME,
+    VERSION,
+    DESCRIPTION,
+    HOME_URL,
+    AUTHOR,
+    AUTHOR_EMAIL,
+    REQUIREMENTS,
+)
+
+setuptools.setup(
+    name=NAME,
+    version=VERSION,
+    description=DESCRIPTION,
+    url=HOME_URL,
+    author=AUTHOR,
+    author_email=AUTHOR_EMAIL,
+    install_requires=REQUIREMENTS,
+    packages=setuptools.find_packages(),
+)

@@ -1,0 +1,11 @@
+"""
+Deep reinforcement learning for Minecraft in OpenAI gym.
+
+Portions of this code are based on example code from Keras-rl, used under the MIT license.
+"""
+
+# Imports:
+try:
+    import gym_minecraft  # necessary to register the environment
+except ImportError:
+    raise RuntimeError("minecraft-deep-learning requires gym-minecraft (see https://github.com/tambetm/gym-minecraft for installation instructions)")

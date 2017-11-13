@@ -1,0 +1,6 @@
+# Imports:
+from minecraft_deep_learning.main import main
+
+# Main:
+if __name__ == "__main__":
+    main()

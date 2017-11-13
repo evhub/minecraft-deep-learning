@@ -1,0 +1,42 @@
+# Imports:
+import os
+
+# Environment constants:
+ENV_NAME = "MinecraftBasic-v0"
+IMAGE_SIZE = (32, 32)
+
+# Model constants:
+HIDDEN_NEURONS = 256
+WINDOW_LENGTH = 4
+MEMORY_SIZE = 10000
+LEARNING_RATE = .0005
+
+# Training constants:
+NUM_STEPS = 100000
+WARMUP_STEPS = 500
+
+# Main constants:
+LOG_INTERVAL = 500
+TESTING_EPISODES = 5
+WEIGHTS_DIR = (
+    __file__
+    |> os.path.dirname
+    |> os.path.dirname
+    |> os.path.join$(?, "stored_weights")
+)
+
+if not os.path.exists(WEIGHTS_DIR):
+    os.mkdir(WEIGHTS_DIR)
+
+# Installation constants:
+NAME = "minecraft-deep-learning"
+VERSION = "0.0.1"
+DESCRIPTION = "Deep reinforcement learning in Minecraft using gym, malmo, and keras-rl."
+HOME_URL = "https://github.com/evhub/minecraft-deep-learning"
+AUTHOR = "Evan Hubinger"
+AUTHOR_EMAIL = "evanjhub@gmail.com"
+REQUIREMENTS = [
+    "gym",
+    "keras-rl",
+    "tensorflow",
+]
