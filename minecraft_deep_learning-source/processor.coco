@@ -4,21 +4,26 @@ from PIL import Image
 
 from rl.core import Processor
 
-from minecraft_deep_learning.constants import IMAGE_SIZE
+from minecraft_deep_learning.constants import (
+    IMAGE_SIZE,
+    INPUT_SIZE,
+)
 
 # Processor:
 class MinecraftProcessor(Processor):
     """Convert gym_minecraft output into a form understood by keras-rl."""
 
     def process_observation(self, observation) =
-        assert observation.shape == IMAGE_SIZE + (3,), observation.shape
+        assert IMAGE_SIZE is not None and observation.shape == IMAGE_SIZE + (3,), observation.shape
         processed_observation = (
             observation
             |> Image.fromarray
-            |> .convert("L")
+            # PIL uses (width, height) not (height, width)
+            |> .resize(INPUT_SIZE |> reversed |> tuple)
+            |> .convert("L")  # grayscale
             |> np.asarray$(dtype="uint8")
         )
-        assert processed_observation.shape == IMAGE_SIZE, processed_observation.shape
+        assert processed_observation.shape == INPUT_SIZE, processed_observation.shape
         processed_observation
 
     def process_state_batch(self, batch) =

@@ -23,6 +23,7 @@ from minecraft_deep_learning.processor import MinecraftProcessor
 from minecraft_deep_learning.constants import (
     ENV_NAME,
     IMAGE_SIZE,
+    INPUT_SIZE,
     HIDDEN_NEURONS,
     MEMORY_SIZE,
     WINDOW_LENGTH,
@@ -34,7 +35,11 @@ from minecraft_deep_learning.constants import (
 def build_environment():
     """Build the Minecraft gym environment."""
     env = gym.make(ENV_NAME)
-    env.init(start_minecraft=True, videoResolution=IMAGE_SIZE)
+    env.init(
+        start_minecraft=True,
+        # malmo uses (width, height) not (height, width)
+        videoResolution=IMAGE_SIZE |> reversed |> tuple,
+    )
     return env
 
 # Model setup:
@@ -46,11 +51,11 @@ def build_agent(env):
         Permute(
             # convert (channels, width, height) input to proper ordering
             (2, 3, 1) if image_data_format() == "channels_last" else (1, 2, 3),
-            input_shape=(WINDOW_LENGTH,) + IMAGE_SIZE,
+            input_shape=(WINDOW_LENGTH,) + INPUT_SIZE,
         ),
-        Convolution2D(16, 8, 8, subsample=(4, 4)),
+        Convolution2D(16, (8, 8), subsample=(4, 4)),
         Activation("relu"),
-        Convolution2D(32, 4, 4, subsample=(2, 2)),
+        Convolution2D(32, (4, 4), subsample=(2, 2)),
         Activation("relu"),
         Flatten(),
         Dense(HIDDEN_NEURONS),

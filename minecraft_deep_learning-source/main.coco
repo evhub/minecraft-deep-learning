@@ -22,8 +22,16 @@ from minecraft_deep_learning.constants import (
 final_weights_file = os.path.join(WEIGHTS_DIR, "weights_final.h5f")
 
 arguments = argparse.ArgumentParser()
-arguments.add_argument("--mode", choices=["train", "test", "debug"], default="train")
-arguments.add_argument("--weights", type=str, default=final_weights_file)
+arguments.add_argument(
+    "--mode",
+    choices=["train", "test", "debug"],
+    default="train",
+)
+arguments.add_argument(
+    "--weights",
+    type=str,
+    default=final_weights_file,
+)
 
 # Argument handler:
 def main(raw_args=None):

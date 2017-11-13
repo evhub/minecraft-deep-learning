@@ -3,11 +3,12 @@ import os
 
 # Environment constants:
 ENV_NAME = "MinecraftBasic-v0"
-IMAGE_SIZE = (32, 32)
+IMAGE_SIZE = (240, 320)  # (height, width)
 
 # Model constants:
+INPUT_SIZE = (24, 32)  # (height, width)
+WINDOW_LENGTH = 1
 HIDDEN_NEURONS = 256
-WINDOW_LENGTH = 4
 MEMORY_SIZE = 10000
 LEARNING_RATE = .0005
 
