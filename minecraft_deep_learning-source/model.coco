@@ -9,7 +9,7 @@ from keras.layers import (
     Dense,
     Activation,
     Flatten,
-    Convolution2D,
+    Conv2D,
     Permute,
 )
 from rl.agents.dqn import DQNAgent
@@ -24,11 +24,12 @@ from minecraft_deep_learning.constants import (
     ENV_NAME,
     IMAGE_SIZE,
     INPUT_SIZE,
-    HIDDEN_NEURONS,
+    HIDDEN_LAYERS,
     MEMORY_SIZE,
     WINDOW_LENGTH,
     WARMUP_STEPS,
     LEARNING_RATE,
+    GRAYSCALE,
 )
 
 # Environment setup:
@@ -51,15 +52,17 @@ def build_agent(env):
         Permute(
             # convert (channels, width, height) input to proper ordering
             (2, 3, 1) if image_data_format() == "channels_last" else (1, 2, 3),
-            input_shape=(WINDOW_LENGTH,) + INPUT_SIZE,
+            input_shape=((3 if not GRAYSCALE else 1) * WINDOW_LENGTH,) + INPUT_SIZE,
         ),
-        Convolution2D(16, (8, 8), subsample=(4, 4)),
+        Conv2D(16, (8, 8), strides=(4, 4)),
         Activation("relu"),
-        Convolution2D(32, (4, 4), subsample=(2, 2)),
+        Conv2D(32, (4, 4), strides=(2, 2)),
         Activation("relu"),
         Flatten(),
-        Dense(HIDDEN_NEURONS),
-        Activation("relu"),
+    ] + [
+        Dense(neurons, activation="relu")
+        for neurons in HIDDEN_LAYERS
+    ] + [
         Dense(num_actions),
     ])
 

@@ -31,7 +31,7 @@ clean:
 
 .PHONY: wipe
 wipe: clean
-	rm -rf ./minecraft_deep_learning
+	rm -rf ./minecraft_deep_learning ./stored_weights
 	find . -name '*.py' -delete
 
 .PHONY: watch

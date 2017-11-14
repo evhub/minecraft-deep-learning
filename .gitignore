@@ -108,3 +108,6 @@ ENV/
 
 # Compiled Coconut
 *.py
+
+# Stored weights
+stored_weights/

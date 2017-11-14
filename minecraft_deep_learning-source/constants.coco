@@ -2,13 +2,14 @@
 import os
 
 # Environment constants:
-ENV_NAME = "MinecraftBasic-v0"
+ENV_NAME = "MinecraftTrickyArena1-v0"
 IMAGE_SIZE = (240, 320)  # (height, width)
 
 # Model constants:
 INPUT_SIZE = (24, 32)  # (height, width)
+GRAYSCALE = False
 WINDOW_LENGTH = 1
-HIDDEN_NEURONS = 256
+HIDDEN_LAYERS = (256,)
 MEMORY_SIZE = 10000
 LEARNING_RATE = .0005
 
@@ -17,7 +18,7 @@ NUM_STEPS = 100000
 WARMUP_STEPS = 500
 
 # Main constants:
-LOG_INTERVAL = 500
+LOG_INTERVAL = 1000
 TESTING_EPISODES = 5
 WEIGHTS_DIR = (
     __file__
