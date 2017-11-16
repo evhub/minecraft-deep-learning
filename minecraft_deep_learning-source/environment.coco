@@ -7,6 +7,7 @@ from minecraft_deep_learning.constants import (
     RESTRICT_ACTIONS,
     OBSERVE_DEPTH,
     DEBUG,
+    LOG_INTERVAL,
 )
 
 # Environment setup:
@@ -27,8 +28,17 @@ def build_environment():
         if RESTRICT_ACTIONS is None or action.startswith(RESTRICT_ACTIONS):
             discrete_action_names.append(action)
     discrete_action_space = gym.spaces.Discrete(len(discrete_action_names))
+
     if DEBUG:
         print("actions: {} -> {}".format(env.action_names[0], discrete_action_names))
+        old_step = env.step
+        env._counter = 0
+        def new_step(action):
+            if env._counter % (LOG_INTERVAL//10) == 0:
+                print("\ntook action: {}".format(discrete_action_names[action]))
+            env._counter += 1
+            return old_step(action)
+        env.step = new_step
 
     env.action_names = [discrete_action_names]
     env.action_spaces = [discrete_action_space]

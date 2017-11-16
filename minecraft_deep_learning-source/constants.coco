@@ -2,35 +2,40 @@
 import os
 
 # Global constants:
-SCALE = 5000
-DEBUG = False
+SCALE = 1000
+DEBUG = True
 
 # Environment constants:
-ENV_NAME = "MinecraftDefaultFlat1-v0"
-IMAGE_SIZE = (240, 320)
-OBSERVE_DEPTH = False
+ENV_NAME = "MinecraftBasic-v0"
+IMAGE_SIZE = (240, 320)  # (height, width)
+OBSERVE_DEPTH = True
 RESTRICT_ACTIONS = (
     "move",
     "strafe",
     "turn",
 )
-REWARD_DISTANCE = 0  # discount factor
+REWARD_DISTANCE = 0.1  # discount factor
 REWARD_POSITIONS = {
     # "x|y|z": (offset, discount)
-    "x": (19.5, 0.1),
-    "y": (227, 0.1),
-    "z": (19.5, 0.1),
 }
 DISABLE_REWARDS = (
     -1000,
+    -1001,
 )
 
 # Model constants:
 BASE_INPUT_SIZE = (24, 32)  # (height, width)
 GRAYSCALE = True
 TRIM_HEIGHT = False
-WINDOW_SIZE = 4
-HIDDEN_LAYERS = (256,)
+WINDOW_SIZE = 1
+CONV_LAYERS = (
+    # (filters, size, strides)
+    (16, (8, 8), (4, 4)),
+    (32, (4, 4), (2, 2)),
+)
+DENSE_LAYERS = (
+    128,
+)
 MEMORY_SIZE = 10*SCALE
 
 CHANNELS = 1 if GRAYSCALE else 3 + OBSERVE_DEPTH

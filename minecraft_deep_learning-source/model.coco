@@ -21,7 +21,8 @@ from rl.memory import SequentialMemory
 from minecraft_deep_learning.processor import MinecraftProcessor
 from minecraft_deep_learning.constants import (
     INPUT_SIZE,
-    HIDDEN_LAYERS,
+    DENSE_LAYERS,
+    CONV_LAYERS,
     MEMORY_SIZE,
     WINDOW_SIZE,
     WARMUP_STEPS,
@@ -39,12 +40,14 @@ def build_agent(env):
             (2, 3, 1) if image_data_format() == "channels_last" else (1, 2, 3),
             input_shape=(CHANNELS * WINDOW_SIZE,) + INPUT_SIZE,
         ),
-        Conv2D(16, (8, 8), strides=(4, 4), activation="relu"),
-        Conv2D(32, (4, 4), strides=(2, 2), activation="relu"),
+    ] + [
+        Conv2D(filters, size, strides=strides, activation="relu")
+        for filters, size, strides in CONV_LAYERS
+    ] + [
         Flatten(),
     ] + [
         Dense(neurons, activation="relu")
-        for neurons in HIDDEN_LAYERS
+        for neurons in DENSE_LAYERS
     ] + [
         Dense(num_actions),
     ])
