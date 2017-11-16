@@ -1,25 +1,50 @@
 # Imports:
 import os
 
+# Global constants:
+SCALE = 5000
+DEBUG = False
+
 # Environment constants:
-ENV_NAME = "MinecraftTrickyArena1-v0"
-IMAGE_SIZE = (240, 320)  # (height, width)
+ENV_NAME = "MinecraftDefaultFlat1-v0"
+IMAGE_SIZE = (240, 320)
+OBSERVE_DEPTH = False
+RESTRICT_ACTIONS = (
+    "move",
+    "strafe",
+    "turn",
+)
+REWARD_DISTANCE = 0  # discount factor
+REWARD_POSITIONS = {
+    # "x|y|z": (offset, discount)
+    "x": (19.5, 0.1),
+    "y": (227, 0.1),
+    "z": (19.5, 0.1),
+}
+DISABLE_REWARDS = (
+    -1000,
+)
 
 # Model constants:
-INPUT_SIZE = (24, 32)  # (height, width)
-GRAYSCALE = False
-WINDOW_LENGTH = 1
+BASE_INPUT_SIZE = (24, 32)  # (height, width)
+GRAYSCALE = True
+TRIM_HEIGHT = False
+WINDOW_SIZE = 4
 HIDDEN_LAYERS = (256,)
-MEMORY_SIZE = 10000
-LEARNING_RATE = .0005
+MEMORY_SIZE = 10*SCALE
+
+CHANNELS = 1 if GRAYSCALE else 3 + OBSERVE_DEPTH
+INPUT_SIZE = BASE_INPUT_SIZE
+if TRIM_HEIGHT:
+    INPUT_SIZE = (INPUT_SIZE[0]//2,) + INPUT_SIZE[1:]
 
 # Training constants:
-NUM_STEPS = 100000
-WARMUP_STEPS = 500
+NUM_STEPS = 100*SCALE
+WARMUP_STEPS = 5*SCALE
 
 # Main constants:
-LOG_INTERVAL = 1000
-TESTING_EPISODES = 5
+LOG_INTERVAL = WARMUP_STEPS
+TESTING_EPISODES = 10
 WEIGHTS_DIR = (
     __file__
     |> os.path.dirname

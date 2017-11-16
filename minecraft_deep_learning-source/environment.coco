@@ -1,0 +1,36 @@
+# Imports:
+import gym
+
+from minecraft_deep_learning.constants import (
+    ENV_NAME,
+    IMAGE_SIZE,
+    RESTRICT_ACTIONS,
+    OBSERVE_DEPTH,
+    DEBUG,
+)
+
+# Environment setup:
+def build_environment():
+    """Build the Minecraft gym environment."""
+    env = gym.make(ENV_NAME)
+    env.init(
+        start_minecraft=True,
+        # malmo uses (width, height) not (height, width)
+        videoResolution=IMAGE_SIZE |> reversed |> tuple if IMAGE_SIZE is not None else None,
+        videoWithDepth=OBSERVE_DEPTH,
+    )
+    assert isinstance(env.action_space, gym.spaces.Discrete), env.action_space
+    assert len(env.action_names) == 1 and len(env.action_spaces) == 1, (env.action_names, env.action_spaces)
+
+    discrete_action_names = []
+    for action in env.action_names[0]:
+        if RESTRICT_ACTIONS is None or action.startswith(RESTRICT_ACTIONS):
+            discrete_action_names.append(action)
+    discrete_action_space = gym.spaces.Discrete(len(discrete_action_names))
+    if DEBUG:
+        print("actions: {} -> {}".format(env.action_names[0], discrete_action_names))
+
+    env.action_names = [discrete_action_names]
+    env.action_spaces = [discrete_action_space]
+    env.action_space = discrete_action_space
+    return env

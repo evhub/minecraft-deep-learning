@@ -1,10 +1,9 @@
 # Imports:
 import numpy as np
-import gym
 
 from keras.models import Sequential
 from keras.backend import image_data_format
-from keras.optimizers import Adam
+from keras.optimizers import Nadam
 from keras.layers import (
     Dense,
     Activation,
@@ -21,27 +20,13 @@ from rl.memory import SequentialMemory
 
 from minecraft_deep_learning.processor import MinecraftProcessor
 from minecraft_deep_learning.constants import (
-    ENV_NAME,
-    IMAGE_SIZE,
     INPUT_SIZE,
     HIDDEN_LAYERS,
     MEMORY_SIZE,
-    WINDOW_LENGTH,
+    WINDOW_SIZE,
     WARMUP_STEPS,
-    LEARNING_RATE,
-    GRAYSCALE,
+    CHANNELS,
 )
-
-# Environment setup:
-def build_environment():
-    """Build the Minecraft gym environment."""
-    env = gym.make(ENV_NAME)
-    env.init(
-        start_minecraft=True,
-        # malmo uses (width, height) not (height, width)
-        videoResolution=IMAGE_SIZE |> reversed |> tuple,
-    )
-    return env
 
 # Model setup:
 def build_agent(env):
@@ -52,12 +37,10 @@ def build_agent(env):
         Permute(
             # convert (channels, width, height) input to proper ordering
             (2, 3, 1) if image_data_format() == "channels_last" else (1, 2, 3),
-            input_shape=((3 if not GRAYSCALE else 1) * WINDOW_LENGTH,) + INPUT_SIZE,
+            input_shape=(CHANNELS * WINDOW_SIZE,) + INPUT_SIZE,
         ),
-        Conv2D(16, (8, 8), strides=(4, 4)),
-        Activation("relu"),
-        Conv2D(32, (4, 4), strides=(2, 2)),
-        Activation("relu"),
+        Conv2D(16, (8, 8), strides=(4, 4), activation="relu"),
+        Conv2D(32, (4, 4), strides=(2, 2), activation="relu"),
         Flatten(),
     ] + [
         Dense(neurons, activation="relu")
@@ -68,7 +51,7 @@ def build_agent(env):
 
     memory = SequentialMemory(
         limit=MEMORY_SIZE,
-        window_length=WINDOW_LENGTH,
+        window_length=WINDOW_SIZE,
     )
 
     processor = MinecraftProcessor()
@@ -89,13 +72,10 @@ def build_agent(env):
         memory=memory,
         processor=processor,
         nb_steps_warmup=WARMUP_STEPS,
-        gamma=.99,
-        target_model_update=10000,
-        train_interval=4,
-        delta_clip=1.0,
+        train_interval=WINDOW_SIZE,
     )
     agent.compile(
-        optimizer=Adam(lr=LEARNING_RATE),
+        optimizer=Nadam(),
         metrics=["mae"],
     )
     return agent

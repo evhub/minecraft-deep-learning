@@ -1,4 +1,5 @@
 # Imports:
+from pprint import pprint
 import numpy as np
 from PIL import Image
 
@@ -6,41 +7,87 @@ from rl.core import Processor
 
 from minecraft_deep_learning.constants import (
     IMAGE_SIZE,
+    BASE_INPUT_SIZE,
     INPUT_SIZE,
     GRAYSCALE,
-    WINDOW_LENGTH,
+    OBSERVE_DEPTH,
+    CHANNELS,
+    WINDOW_SIZE,
+    TRIM_HEIGHT,
+    DEBUG,
+    LOG_INTERVAL,
+    REWARD_DISTANCE,
+    REWARD_POSITIONS,
+    DISABLE_REWARDS,
 )
+
+if DEBUG:
+    import pygame
 
 # Processor:
 class MinecraftProcessor(Processor):
     """Convert gym_minecraft output into a form understood by keras-rl."""
+    if DEBUG:
+        counter = -1
+        pygame.init()
+        # pygame uses (width, height) not (height, width)
+        screen_size = IMAGE_SIZE |> reversed |> tuple
+        if TRIM_HEIGHT:
+            screen_size = screen_size[:-1] + (screen_size[-1]//2,)
+        screen = pygame.display.set_mode(screen_size)
+
+    def process_step(self, observation, reward, done, info):
+        if DEBUG:
+            self.counter += 1
+        return (
+            self.process_observation(observation),
+            self.process_reward(reward, info),
+            done,
+            self.process_info(info),
+        )
 
     def process_observation(self, observation):
-        assert IMAGE_SIZE is not None and observation.shape == IMAGE_SIZE + (3,), observation.shape
+        assert IMAGE_SIZE is not None and observation.shape == IMAGE_SIZE + (3 + OBSERVE_DEPTH,), observation.shape
         processed_observation = (
             observation
             |> Image.fromarray
             # PIL uses (width, height) not (height, width)
-            |> .resize(INPUT_SIZE |> reversed |> tuple)
-            |> .convert("L" if GRAYSCALE else "RGB")
+            |> .resize(BASE_INPUT_SIZE |> reversed |> tuple)
+            |> (.convert("L") if GRAYSCALE else ->_)
             |> np.asarray$(dtype="uint8")
         )
-        assert processed_observation.shape == INPUT_SIZE + ((3,) if not GRAYSCALE else ()), processed_observation.shape
+        if TRIM_HEIGHT:
+            height = processed_observation.shape[0]
+            processed_observation = processed_observation[height//2:]
+        if DEBUG:
+            pygame.event.pump()
+            debug_image = (
+                processed_observation
+                |> Image.fromarray
+                |> .convert("RGB")
+                |> .resize(self.screen_size)
+                |> np.asarray$(dtype="uint8")
+                |> np.swapaxes$(?, 0, 1)
+            )
+            assert debug_image.shape == self.screen_size + (3,), (debug_image.shape, self.screen_size)
+            pygame.surfarray.blit_array(self.screen, debug_image)
+            pygame.display.flip()
+        assert processed_observation.shape == INPUT_SIZE + ((CHANNELS,) if CHANNELS > 1 else ()), processed_observation.shape
         return processed_observation
 
     def process_state_batch(self, batch):
-        assert batch.shape[1:] == (WINDOW_LENGTH,) + INPUT_SIZE + ((3,) if not GRAYSCALE else ()), batch.shape
+        assert batch.shape[1:] == (WINDOW_SIZE,) + INPUT_SIZE + ((CHANNELS,) if CHANNELS > 1 else ()), batch.shape
         # We could perform this processing step in `process_observation`. In this case, however,
         # we would need to store a `float32` array instead, which is 4x more memory intensive than
-        # an `uint8` array. This matters if we store 1M observations.
+        # a `uint8` array. This matters if we store 1M observations.
         processed_batch = batch.astype("float32")/255.0
-        if not GRAYSCALE:
+        if CHANNELS > 1:
             processed_batch = (
                 processed_batch
                 |> np.moveaxis$(?, -1, 2)
                 |> .reshape((batch.shape[0], -1) + INPUT_SIZE)
             )
-        assert processed_batch.shape == (batch.shape[0], (3 if not GRAYSCALE else 1) * WINDOW_LENGTH) + INPUT_SIZE, processed_batch.shape
+        assert processed_batch.shape == (batch.shape[0], CHANNELS * WINDOW_SIZE) + INPUT_SIZE, processed_batch.shape
         return processed_batch
 
     def process_info(self, info):
@@ -49,4 +96,29 @@ class MinecraftProcessor(Processor):
             list(info["observation"].items())
             if info["observation"] is not None else []
         )
+        if DEBUG:
+            if self.counter % LOG_INTERVAL == 0:
+                pprint(info)
         return info
+
+    def process_reward(self, reward, info):
+        if DEBUG:
+            old_reward = reward
+        if reward in DISABLE_REWARDS:
+            reward = 0
+        if info["observation"] is not None:
+            if REWARD_DISTANCE:
+                new_distance = info["observation"]["DistanceTravelled"]
+                if new_distance != 0:
+                    reward += (new_distance - self.distance)*REWARD_DISTANCE
+                self.distance = new_distance
+            for coord, (offset, discount) in REWARD_POSITIONS.items():
+                pos = info["observation"][coord.upper() + "Pos"]
+                reward += abs(pos - offset)*discount
+        if DEBUG and (
+            self.counter % (LOG_INTERVAL//10) == 0
+            or abs(old_reward) > 100
+            or abs(reward) > 100
+        ):
+            print("\nreward: {} -> {}".format(old_reward, reward))
+        return reward

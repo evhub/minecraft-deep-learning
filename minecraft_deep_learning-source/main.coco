@@ -1,22 +1,26 @@
 # Imports:
+import sys
 import os.path
 import argparse
+import traceback
 
 from rl.callbacks import (
     FileLogger,
     ModelIntervalCheckpoint,
 )
 
-from minecraft_deep_learning.model import (
-    build_environment,
-    build_agent,
-)
+from minecraft_deep_learning.environment import build_environment
+from minecraft_deep_learning.model import build_agent
 from minecraft_deep_learning.constants import (
     NUM_STEPS,
     LOG_INTERVAL,
     TESTING_EPISODES,
     WEIGHTS_DIR,
+    DEBUG,
 )
+
+if DEBUG:
+    import pygame
 
 # Argument parser:
 final_weights_file = os.path.join(WEIGHTS_DIR, "weights_final.h5f")
@@ -33,14 +37,8 @@ arguments.add_argument(
     default=final_weights_file,
 )
 
-# Argument handler:
-def main(raw_args=None):
-    if raw_args is None:
-        args = arguments.parse_args()
-    else:
-        args = arguments.parse_args(raw_args)
-
-    env = build_environment()
+# Argument handling:
+def run_agent(env, args):
     agent = build_agent(env)
 
     if args.mode == "debug":
@@ -71,7 +69,23 @@ def main(raw_args=None):
 
     elif args.mode == "test":
         agent.load_weights(args.weights)
-        agent.test(env, nb_episodes=TESTING_EPISODES)
+        agent.test(env, nb_episodes=TESTING_EPISODES, visualize=False)
 
     else:
         raise ValueError("unknown --mode {!r}".format(args.mode))
+
+def main(raw_args=None):
+    if raw_args is None:
+        args = arguments.parse_args()
+    else:
+        args = arguments.parse_args(raw_args)
+    env = build_environment()
+    try:
+        run_agent(env, args)
+    except:
+        traceback.print_exc()
+        sys.exit(1)
+    else:
+        sys.exit(0)
+    finally:
+        env.close()
