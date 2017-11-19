@@ -17,7 +17,7 @@ from minecraft_deep_learning.constants import (
     DEBUG,
     LOG_INTERVAL,
     REWARD_DISTANCE,
-    REWARD_POSITIONS,
+    REWARD_POSITION,
     DISABLE_REWARDS,
 )
 
@@ -112,9 +112,9 @@ class MinecraftProcessor(Processor):
                 if new_distance != 0:
                     reward += (new_distance - self.distance)*REWARD_DISTANCE
                 self.distance = new_distance
-            for coord, (offset, discount) in REWARD_POSITIONS.items():
+            for coord, (offset, factor) in REWARD_POSITION.items():
                 pos = info["observation"][coord.upper() + "Pos"]
-                reward += abs(pos - offset)*discount
+                reward += abs(pos - offset)*factor
         if DEBUG and (
             self.counter % (LOG_INTERVAL//10) == 0
             or abs(old_reward) > 100

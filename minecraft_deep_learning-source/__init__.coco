@@ -1,5 +1,5 @@
 """
-Deep reinforcement learning for Minecraft in OpenAI gym.
+Deep reinforcement learning in Minecraft using gym-minecraft and keras-rl.
 
 Portions of this code are based on example code from Keras-rl, used under the MIT license.
 """

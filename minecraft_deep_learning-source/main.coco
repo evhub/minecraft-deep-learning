@@ -19,9 +19,6 @@ from minecraft_deep_learning.constants import (
     DEBUG,
 )
 
-if DEBUG:
-    import pygame
-
 # Argument parser:
 final_weights_file = os.path.join(WEIGHTS_DIR, "weights_final.h5f")
 

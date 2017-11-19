@@ -2,21 +2,23 @@
 import os
 
 # Global constants:
-SCALE = 1000
-DEBUG = True
+SCALE = 10000
+DEBUG = False
 
 # Environment constants:
-ENV_NAME = "MinecraftBasic-v0"
+ENV_NAME = "MinecraftDefaultFlat1-v0"
 IMAGE_SIZE = (240, 320)  # (height, width)
-OBSERVE_DEPTH = True
+OBSERVE_DEPTH = False
 RESTRICT_ACTIONS = (
     "move",
     "strafe",
     "turn",
 )
-REWARD_DISTANCE = 0.1  # discount factor
-REWARD_POSITIONS = {
-    # "x|y|z": (offset, discount)
+REWARD_DISTANCE = 0.1  # reward per unit traveled
+REWARD_POSITION = {
+    # "x|y|z": (offset, reward per unit away)
+    "x": (19.5, -1),
+    "z": (19.5, -1),
 }
 DISABLE_REWARDS = (
     -1000,
@@ -24,31 +26,33 @@ DISABLE_REWARDS = (
 )
 
 # Model constants:
-BASE_INPUT_SIZE = (24, 32)  # (height, width)
+DOWNSAMPLE = 5
 GRAYSCALE = True
 TRIM_HEIGHT = False
-WINDOW_SIZE = 1
+WINDOW_SIZE = 4
 CONV_LAYERS = (
     # (filters, size, strides)
     (16, (8, 8), (4, 4)),
     (32, (4, 4), (2, 2)),
 )
 DENSE_LAYERS = (
-    128,
+    256,
 )
+DUELING = True
 MEMORY_SIZE = 10*SCALE
 
 CHANNELS = 1 if GRAYSCALE else 3 + OBSERVE_DEPTH
-INPUT_SIZE = BASE_INPUT_SIZE
+INPUT_SIZE = BASE_INPUT_SIZE = IMAGE_SIZE |> map$(-> _//DOWNSAMPLE) |> tuple
 if TRIM_HEIGHT:
     INPUT_SIZE = (INPUT_SIZE[0]//2,) + INPUT_SIZE[1:]
 
 # Training constants:
 NUM_STEPS = 100*SCALE
-WARMUP_STEPS = 5*SCALE
+WARMUP_STEPS = SCALE
+TARGET_UPDATE_FREQ = 0.001
 
 # Main constants:
-LOG_INTERVAL = WARMUP_STEPS
+LOG_INTERVAL = 5*SCALE
 TESTING_EPISODES = 10
 WEIGHTS_DIR = (
     __file__
@@ -63,7 +67,7 @@ if not os.path.exists(WEIGHTS_DIR):
 # Installation constants:
 NAME = "minecraft-deep-learning"
 VERSION = "0.0.1"
-DESCRIPTION = "Deep reinforcement learning in Minecraft using gym, malmo, and keras-rl."
+DESCRIPTION = "Deep reinforcement learning in Minecraft using gym-minecraft and keras-rl."
 HOME_URL = "https://github.com/evhub/minecraft-deep-learning"
 AUTHOR = "Evan Hubinger"
 AUTHOR_EMAIL = "evanjhub@gmail.com"

@@ -27,6 +27,8 @@ from minecraft_deep_learning.constants import (
     WINDOW_SIZE,
     WARMUP_STEPS,
     CHANNELS,
+    DUELING,
+    TARGET_UPDATE_FREQ,
 )
 
 # Model setup:
@@ -52,13 +54,6 @@ def build_agent(env):
         Dense(num_actions),
     ])
 
-    memory = SequentialMemory(
-        limit=MEMORY_SIZE,
-        window_length=WINDOW_SIZE,
-    )
-
-    processor = MinecraftProcessor()
-
     policy = LinearAnnealedPolicy(
         EpsGreedyQPolicy(),
         attr="eps",
@@ -68,6 +63,13 @@ def build_agent(env):
         nb_steps=MEMORY_SIZE,
     )
 
+    memory = SequentialMemory(
+        limit=MEMORY_SIZE,
+        window_length=WINDOW_SIZE,
+    )
+
+    processor = MinecraftProcessor()
+
     agent = DQNAgent(
         model=model,
         nb_actions=num_actions,
@@ -76,6 +78,8 @@ def build_agent(env):
         processor=processor,
         nb_steps_warmup=WARMUP_STEPS,
         train_interval=WINDOW_SIZE,
+        enable_dueling_network=DUELING,
+        target_model_update=TARGET_UPDATE_FREQ,
     )
     agent.compile(
         optimizer=Nadam(),
