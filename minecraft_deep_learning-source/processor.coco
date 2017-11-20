@@ -16,7 +16,6 @@ from minecraft_deep_learning.constants import (
     TRIM_HEIGHT,
     DEBUG,
     LOG_INTERVAL,
-    REWARD_DISTANCE,
     REWARD_POSITION,
     DISABLE_REWARDS,
 )
@@ -103,22 +102,20 @@ class MinecraftProcessor(Processor):
 
     def process_reward(self, reward, info):
         if DEBUG:
-            old_reward = reward
+            reward_history = [(reward, "original")]
         if reward in DISABLE_REWARDS:
             reward = 0
+            if DEBUG:
+                reward_history.append.((reward, "disabled"))
         if info["observation"] is not None:
-            if REWARD_DISTANCE:
-                new_distance = info["observation"]["DistanceTravelled"]
-                if new_distance != 0:
-                    reward += (new_distance - self.distance)*REWARD_DISTANCE
-                self.distance = new_distance
             for coord, (offset, factor) in REWARD_POSITION.items():
                 pos = info["observation"][coord.upper() + "Pos"]
                 reward += abs(pos - offset)*factor
+                if DEBUG:
+                    reward_history.append((reward, coord))
         if DEBUG and (
             self.counter % (LOG_INTERVAL//10) == 0
-            or abs(old_reward) > 100
-            or abs(reward) > 100
+            or any(r >= 100 for r, why in reward_history)
         ):
-            print("\nreward: {} -> {}".format(old_reward, reward))
+            print("\nreward: " + " -> ".join("{} ({})".format(r, why) for r, why in reward_history))
         return reward

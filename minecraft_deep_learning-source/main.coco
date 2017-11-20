@@ -17,6 +17,7 @@ from minecraft_deep_learning.constants import (
     TESTING_EPISODES,
     WEIGHTS_DIR,
     DEBUG,
+    ESTIMATED_TIME,
 )
 
 # Argument parser:
@@ -46,13 +47,14 @@ def run_agent(env, args):
         pdb.set_trace()
 
     elif args.mode == "train":
+        print("Training... (estimated time: {})".format(ESTIMATED_TIME))
         callbacks = [
             ModelIntervalCheckpoint(
                 os.path.join(WEIGHTS_DIR, "weights_{step}.h5f"),
                 interval=LOG_INTERVAL,
             ),
             FileLogger(
-                os.path.join(WEIGHTS_DIR, "log.json"),
+                os.path.join(WEIGHTS_DIR, "log_{step}.json"),
                 interval=LOG_INTERVAL,
             ),
         ]

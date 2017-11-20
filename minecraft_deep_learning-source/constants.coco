@@ -1,5 +1,6 @@
 # Imports:
 import os
+import math
 
 # Global constants:
 SCALE = 10000
@@ -14,11 +15,10 @@ RESTRICT_ACTIONS = (
     "strafe",
     "turn",
 )
-REWARD_DISTANCE = 0.1  # reward per unit traveled
 REWARD_POSITION = {
     # "x|y|z": (offset, reward per unit away)
-    "x": (19.5, -1),
-    "z": (19.5, -1),
+    "x": (19.5, -0.1),
+    "z": (19.5, -0.1),
 }
 DISABLE_REWARDS = (
     -1000,
@@ -29,7 +29,7 @@ DISABLE_REWARDS = (
 DOWNSAMPLE = 5
 GRAYSCALE = True
 TRIM_HEIGHT = False
-WINDOW_SIZE = 4
+WINDOW_SIZE = 3
 CONV_LAYERS = (
     # (filters, size, strides)
     (16, (8, 8), (4, 4)),
@@ -42,25 +42,40 @@ DUELING = True
 MEMORY_SIZE = 10*SCALE
 
 CHANNELS = 1 if GRAYSCALE else 3 + OBSERVE_DEPTH
-INPUT_SIZE = BASE_INPUT_SIZE = IMAGE_SIZE |> map$(-> _//DOWNSAMPLE) |> tuple
+INPUT_SIZE = BASE_INPUT_SIZE = (
+    IMAGE_SIZE
+    |> map$(-> _//DOWNSAMPLE)
+    |> tuple
+)
 if TRIM_HEIGHT:
     INPUT_SIZE = (INPUT_SIZE[0]//2,) + INPUT_SIZE[1:]
 
 # Training constants:
 NUM_STEPS = 100*SCALE
 WARMUP_STEPS = SCALE
-TARGET_UPDATE_FREQ = 0.001
+TARGET_UPDATE_PERIOD = SCALE
+SOFT_UPDATE_TARGET = False
+
+TARGET_UPDATE = (
+    1/TARGET_UPDATE_PERIOD if SOFT_UPDATE_TARGET
+    else TARGET_UPDATE_PERIOD
+)
+ESTIMATED_TIME = "{} mins".format(
+    (0.05*NUM_STEPS)/60
+    |> math.ceil
+    |> int
+)
 
 # Main constants:
 LOG_INTERVAL = 5*SCALE
 TESTING_EPISODES = 10
+
 WEIGHTS_DIR = (
     __file__
     |> os.path.dirname
     |> os.path.dirname
     |> os.path.join$(?, "stored_weights")
 )
-
 if not os.path.exists(WEIGHTS_DIR):
     os.mkdir(WEIGHTS_DIR)
 
