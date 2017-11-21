@@ -47,7 +47,7 @@ def run_agent(env, args):
         pdb.set_trace()
 
     elif args.mode == "train":
-        print("Training... (estimated time: {})".format(ESTIMATED_TIME))
+        print("Estimated training time: {}".format(ESTIMATED_TIME))
         callbacks = [
             ModelIntervalCheckpoint(
                 os.path.join(WEIGHTS_DIR, "weights_{step}.h5f"),
