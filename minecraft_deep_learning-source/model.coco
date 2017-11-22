@@ -28,6 +28,7 @@ from minecraft_deep_learning.constants import (
     WARMUP_STEPS,
     CHANNELS,
     DUELING,
+    DOUBLE_DQN,
     TARGET_UPDATE,
 )
 
@@ -79,6 +80,7 @@ def build_agent(env):
         nb_steps_warmup=WARMUP_STEPS,
         train_interval=WINDOW_SIZE,
         enable_dueling_network=DUELING,
+        enable_double_dqn=DOUBLE_DQN,
         target_model_update=TARGET_UPDATE,
     )
     agent.compile(

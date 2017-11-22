@@ -2,24 +2,32 @@
 import os
 import math
 
+import pygame
+
 # Global constants:
-SCALE = 10000
 DEBUG = False
+SCALE = 1000 if not DEBUG else 10
 
 # Environment constants:
 ENV_NAME = "MinecraftDefaultFlat1-v0"
 IMAGE_SIZE = (240, 320)  # (height, width)
 OBSERVE_DEPTH = False
-RESTRICT_ACTIONS = (
-    "move",
-    "strafe",
-    "turn",
-)
+SKIP_FRAMES = 0
+KEYMAP = {
+    pygame.K_w: "move 1",
+    pygame.K_s: "move -1",
+    pygame.K_d: "turn 1",
+    pygame.K_a: "turn -1",
+    pygame.K_e: "strafe 1",
+    pygame.K_q: "strafe -1",
+}
+USE_ACTIONS = KEYMAP.values() |> sorted |> list
 REWARD_POSITION = {
     # "x|y|z": (offset, reward per unit away)
     "x": (19.5, -0.1),
     "z": (19.5, -0.1),
 }
+REWARD_POSITION_NORM = 1
 DISABLE_REWARDS = (
     -1000,
     -1001,
@@ -38,23 +46,23 @@ CONV_LAYERS = (
 DENSE_LAYERS = (
     256,
 )
+MEMORY_SIZE = 100*SCALE
+DOUBLE_DQN = True
 DUELING = True
-MEMORY_SIZE = 10*SCALE
 
 CHANNELS = 1 if GRAYSCALE else 3 + OBSERVE_DEPTH
-INPUT_SIZE = BASE_INPUT_SIZE = (
+INPUT_SIZE = (
     IMAGE_SIZE
     |> map$(-> _//DOWNSAMPLE)
     |> tuple
+    |> ((-> (_[0]//2,) + _[1:]) if TRIM_HEIGHT else ->_)
 )
-if TRIM_HEIGHT:
-    INPUT_SIZE = (INPUT_SIZE[0]//2,) + INPUT_SIZE[1:]
 
 # Training constants:
-NUM_STEPS = 100*SCALE
-WARMUP_STEPS = SCALE
+NUM_STEPS = 1000*SCALE
+WARMUP_STEPS = 10*SCALE
 TARGET_UPDATE_PERIOD = SCALE
-SOFT_UPDATE_TARGET = False
+SOFT_UPDATE_TARGET = True
 
 TARGET_UPDATE = (
     1/TARGET_UPDATE_PERIOD if SOFT_UPDATE_TARGET
@@ -67,7 +75,7 @@ ESTIMATED_TIME = "{} mins".format(
 )
 
 # Main constants:
-LOG_INTERVAL = 5*SCALE
+LOG_INTERVAL = NUM_STEPS//20
 TESTING_EPISODES = 10
 
 WEIGHTS_DIR = (

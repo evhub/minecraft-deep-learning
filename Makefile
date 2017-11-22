@@ -6,9 +6,9 @@ test: install
 train: install
 	python minecraft_deep_learning --mode train
 
-.PHONY: debug
-debug: install
-	python minecraft_deep_learning --mode debug
+.PHONY: play
+play: install
+	python minecraft_deep_learning --mode play
 
 .PHONY: install
 install: build

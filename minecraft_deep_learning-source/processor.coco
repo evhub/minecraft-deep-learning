@@ -9,7 +9,7 @@ from rl.core import Processor
 
 from minecraft_deep_learning.constants import (
     IMAGE_SIZE,
-    BASE_INPUT_SIZE,
+    DOWNSAMPLE,
     INPUT_SIZE,
     GRAYSCALE,
     OBSERVE_DEPTH,
@@ -19,23 +19,31 @@ from minecraft_deep_learning.constants import (
     DEBUG,
     LOG_INTERVAL,
     REWARD_POSITION,
+    REWARD_POSITION_NORM,
     DISABLE_REWARDS,
 )
-
-if DEBUG:
-    import pygame
+from minecraft_deep_learning.display import (
+    create_screen,
+    show_array,
+    pump_events,
+)
 
 # Processor:
 class MinecraftProcessor(Processor):
     """Convert gym_minecraft output into a form understood by keras-rl."""
-    if DEBUG:
-        counter = -1
-        pygame.init()
-        # pygame uses (width, height) not (height, width)
-        screen_size = IMAGE_SIZE |> reversed |> tuple
-        if TRIM_HEIGHT:
-            screen_size = screen_size[:-1] + (screen_size[-1]//2,)
-        screen = pygame.display.set_mode(screen_size)
+    screen = None
+    handle_events = staticmethod(pump_events)
+
+    def __init__(self, *args, **kwargs):
+        if DEBUG:
+            self.counter = -1
+            self.use_display()
+        super(MinecraftProcessor, self).__init__(*args, **kwargs)
+
+    def use_display(self):
+        if self.screen is None:
+            self.screen_size = IMAGE_SIZE
+            self.screen = create_screen(self.screen_size)
 
     def process_step(self, observation, reward, done, info):
         if DEBUG:
@@ -53,27 +61,27 @@ class MinecraftProcessor(Processor):
             observation
             |> Image.fromarray
             # PIL uses (width, height) not (height, width)
-            |> .resize(BASE_INPUT_SIZE |> reversed |> tuple)
+            |> (.resize(IMAGE_SIZE |> map$(-> _//DOWNSAMPLE) |> reversed |> tuple)
+                if DOWNSAMPLE and DOWNSAMPLE != 1 else ->_)
             |> (.convert("L") if GRAYSCALE else ->_)
             |> np.asarray$(dtype="uint8")
         )
         if TRIM_HEIGHT:
             height = processed_observation.shape[0]
             processed_observation = processed_observation[height//2:]
-        if DEBUG:
-            pygame.event.pump()
-            debug_image = (
+        assert processed_observation.shape == INPUT_SIZE + ((CHANNELS,) if CHANNELS > 1 else ()), processed_observation.shape
+        if self.screen is not None:
+            display_image = (
                 processed_observation
                 |> Image.fromarray
                 |> .convert("RGB")
-                |> .resize(self.screen_size)
+                # PIL uses (width, height) not (height, width)
+                |> .resize(self.screen_size |> reversed |> tuple)
                 |> np.asarray$(dtype="uint8")
-                |> np.swapaxes$(?, 0, 1)
             )
-            assert debug_image.shape == self.screen_size + (3,), (debug_image.shape, self.screen_size)
-            pygame.surfarray.blit_array(self.screen, debug_image)
-            pygame.display.flip()
-        assert processed_observation.shape == INPUT_SIZE + ((CHANNELS,) if CHANNELS > 1 else ()), processed_observation.shape
+            assert display_image.shape == self.screen_size + (3,), (display_image.shape, self.screen_size + (3,))
+            show_array(self.screen, display_image)
+            self.handle_events()
         return processed_observation
 
     def process_state_batch(self, batch):
@@ -83,6 +91,7 @@ class MinecraftProcessor(Processor):
         # a `uint8` array. This matters if we store 1M observations.
         processed_batch = batch.astype("float32")/255.0
         if CHANNELS > 1:
+            # merge WINDOW_SIZE and CHANNELS together
             processed_batch = (
                 np.moveaxis(processed_batch, -1, 2)
                 |> .reshape((batch.shape[0], -1) + INPUT_SIZE)
@@ -108,20 +117,21 @@ class MinecraftProcessor(Processor):
             reward = 0
             if DEBUG:
                 reward_history.append.((reward, "disabled"))
-        if REWARD_POSITION and info["observation"] is not None:
-            position_reward = 0
-            for coord, (offset, factor) in REWARD_POSITION.items():
-                pos = info["observation"][coord.upper() + "Pos"]
-                position_reward += math.copysign(
-                    ((pos - offset)*factor)**2,
-                    factor,
+        if info["observation"] is not None:
+            if REWARD_POSITION:
+                position_reward = 0
+                for coord, (offset, factor) in REWARD_POSITION.items():
+                    pos = info["observation"][coord.upper() + "Pos"]
+                    position_reward += (
+                        ((pos - offset)*factor)**REWARD_POSITION_NORM
+                        |> math.copysign$(?, factor)
+                    )
+                reward += (
+                    abs(position_reward)**(1/REWARD_POSITION_NORM)
+                    |> math.copysign$(?, position_reward)
                 )
-            reward += math.copysign(
-                abs(position_reward)**0.5,
-                position_reward,
-            )
-            if DEBUG:
-                reward_history.append((reward, "position"))
+                if DEBUG:
+                    reward_history.append((reward, "position"))
         if DEBUG and (
             self.counter % (LOG_INTERVAL//10) == 0
             or any(r >= 100 for r, why in reward_history)

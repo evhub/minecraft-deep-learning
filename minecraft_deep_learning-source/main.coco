@@ -11,12 +11,16 @@ from rl.callbacks import (
 
 from minecraft_deep_learning.environment import build_environment
 from minecraft_deep_learning.model import build_agent
+from minecraft_deep_learning.processor import MinecraftProcessor
+from minecraft_deep_learning.display import (
+    close_display,
+    get_pressed_action,
+)
 from minecraft_deep_learning.constants import (
     NUM_STEPS,
     LOG_INTERVAL,
     TESTING_EPISODES,
     WEIGHTS_DIR,
-    DEBUG,
     ESTIMATED_TIME,
 )
 
@@ -26,7 +30,7 @@ final_weights_file = os.path.join(WEIGHTS_DIR, "weights_final.h5f")
 arguments = argparse.ArgumentParser()
 arguments.add_argument(
     "--mode",
-    choices=["train", "test", "debug"],
+    choices=["train", "test", "play"],
     default="train",
 )
 arguments.add_argument(
@@ -37,17 +41,30 @@ arguments.add_argument(
 
 # Argument handling:
 def run_agent(env, args):
-    agent = build_agent(env)
-
-    if args.mode == "debug":
-        env.render()
-        action = env.action_space.sample()
-        obs, reward, done, info = env.step(action)
-        import pdb
-        pdb.set_trace()
+    """Follow the given parsed arguments in the given environment."""
+    if args.mode == "play":
+        proc = MinecraftProcessor()
+        proc.use_display()
+        proc._action = env.action_space.sample()
+        def proc.handle_events():
+            action_name = None
+            while action_name is None:
+                action_name = get_pressed_action()
+            proc._action = env.action_names[0].index(action_name)
+        done = True
+        while True:
+            if done:
+                env.reset()
+            obs, reward, done, info = (
+                proc._action
+                |> env.step
+                |*> proc.process_step
+            )
+            print("received reward: {}".format(reward))
 
     elif args.mode == "train":
-        print("Estimated training time: {}".format(ESTIMATED_TIME))
+        agent = build_agent(env)
+        print("estimated training time: {}".format(ESTIMATED_TIME))
         callbacks = [
             ModelIntervalCheckpoint(
                 os.path.join(WEIGHTS_DIR, "weights_{step}.h5f"),
@@ -67,6 +84,7 @@ def run_agent(env, args):
         agent.save_weights(final_weights_file, overwrite=True)
 
     elif args.mode == "test":
+        agent = build_agent(env)
         agent.load_weights(args.weights)
         agent.test(env, nb_episodes=TESTING_EPISODES, visualize=False)
 
@@ -74,6 +92,7 @@ def run_agent(env, args):
         raise ValueError("unknown --mode {!r}".format(args.mode))
 
 def main(raw_args=None):
+    """Parse arguments, build environment, and run agent."""
     if raw_args is None:
         args = arguments.parse_args()
     else:
@@ -81,10 +100,6 @@ def main(raw_args=None):
     env = build_environment()
     try:
         run_agent(env, args)
-    except:
-        traceback.print_exc()
-        sys.exit(1)
-    else:
-        sys.exit(0)
     finally:
+        close_display()
         env.close()

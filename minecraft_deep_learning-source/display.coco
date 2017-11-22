@@ -1,0 +1,44 @@
+# Imports:
+import numpy as np
+import pygame
+
+from minecraft_deep_learning.constants import KEYMAP
+
+# Functions:
+def create_screen(screen_size):
+    """Set up pygame and create a screen of the given size."""
+    pygame.init()
+    # pygame uses (width, height) not (height, width)
+    return pygame.display.set_mode(screen_size |> reversed |> tuple)
+
+def show_array(screen, image):
+    """Display the given image to the given screen."""
+    # pygame uses (width, height, channels) not (height, width, channels)
+    swapped_image = np.swapaxes(image, 0, 1)
+    assert screen.get_size() + (3,) == swapped_image.shape, (screen.get_size() + (3,), swapped_image.shape)
+    pygame.surfarray.blit_array(screen, swapped_image)
+    pygame.display.flip()
+
+def close_display():
+    """Quit pygame."""
+    try:
+        pygame.quit()
+    except Exception:
+        pass
+
+def pump_events():
+    """Handle all pygame events."""
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            close_display()
+            raise KeyboardInterrupt()
+
+def get_pressed_action():
+    """Get the action name corresponding to the first pressed key in the queue."""
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN and event.key in KEYMAP:
+            return KEYMAP[event.key]
+        if event.type == pygame.QUIT:
+            close_display()
+            raise KeyboardInterrupt()
+    return None

@@ -4,10 +4,11 @@ import gym
 from minecraft_deep_learning.constants import (
     ENV_NAME,
     IMAGE_SIZE,
-    RESTRICT_ACTIONS,
+    USE_ACTIONS,
     OBSERVE_DEPTH,
     DEBUG,
     LOG_INTERVAL,
+    SKIP_FRAMES,
 )
 
 # Environment setup:
@@ -16,31 +17,28 @@ def build_environment():
     env = gym.make(ENV_NAME)
     env.init(
         start_minecraft=True,
-        # malmo uses (width, height) not (height, width)
+        allowDiscreteMovement=True,
+        add_noop_command=True,
+        # gym-minecraft uses (width, height) not (height, width)
         videoResolution=IMAGE_SIZE |> reversed |> tuple if IMAGE_SIZE is not None else None,
         videoWithDepth=OBSERVE_DEPTH,
+        skip_steps=SKIP_FRAMES,
     )
     assert isinstance(env.action_space, gym.spaces.Discrete), env.action_space
     assert len(env.action_names) == 1 and len(env.action_spaces) == 1, (env.action_names, env.action_spaces)
-
-    discrete_action_names = []
-    for action in env.action_names[0]:
-        if RESTRICT_ACTIONS is None or action.startswith(RESTRICT_ACTIONS):
-            discrete_action_names.append(action)
-    discrete_action_space = gym.spaces.Discrete(len(discrete_action_names))
-
+    assert set(USE_ACTIONS) <= set(env.action_names[0]), env.action_names[0]
+    use_action_space = gym.spaces.Discrete(len(USE_ACTIONS))
     if DEBUG:
-        print("actions: {} -> {}".format(env.action_names[0], discrete_action_names))
-        old_step = env.step
+        print("actions: {} -> {}".format(env.action_names[0], USE_ACTIONS))
         env._counter = 0
-        def new_step(action):
-            if env._counter % (LOG_INTERVAL//10) == 0:
-                print("\ntook action: {}".format(discrete_action_names[action]))
-            env._counter += 1
-            return old_step(action)
-        env.step = new_step
-
-    env.action_names = [discrete_action_names]
-    env.action_spaces = [discrete_action_space]
-    env.action_space = discrete_action_space
+        old_step = env.step
+        def env.step(action_index):
+            if DEBUG:
+                if env._counter % (LOG_INTERVAL//10) == 0:
+                    print("\ntook action: {}".format(USE_ACTIONS[action_index]))
+                env._counter += 1
+            return old_step(action_index)
+    env.action_names = [USE_ACTIONS]
+    env.action_spaces = [use_action_space]
+    env.action_space = use_action_space
     return env
