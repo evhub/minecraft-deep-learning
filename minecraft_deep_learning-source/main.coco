@@ -1,8 +1,6 @@
 # Imports:
-import sys
 import os.path
 import argparse
-import traceback
 
 from rl.callbacks import (
     FileLogger,

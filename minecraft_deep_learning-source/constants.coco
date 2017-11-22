@@ -98,4 +98,5 @@ REQUIREMENTS = [
     "gym",
     "keras-rl",
     "tensorflow",
+    "pygame",
 ]

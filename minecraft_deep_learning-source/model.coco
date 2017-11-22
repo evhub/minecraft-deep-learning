@@ -1,12 +1,9 @@
 # Imports:
-import numpy as np
-
 from keras.models import Sequential
 from keras.backend import image_data_format
 from keras.optimizers import Nadam
 from keras.layers import (
     Dense,
-    Activation,
     Flatten,
     Conv2D,
     Permute,
