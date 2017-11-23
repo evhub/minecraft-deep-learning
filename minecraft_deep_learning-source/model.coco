@@ -9,10 +9,7 @@ from keras.layers import (
     Permute,
 )
 from rl.agents.dqn import DQNAgent
-from rl.policy import (
-    LinearAnnealedPolicy,
-    EpsGreedyQPolicy,
-)
+from rl.policy import BoltzmannGumbelQPolicy
 from rl.memory import SequentialMemory
 
 from minecraft_deep_learning.processor import MinecraftProcessor
@@ -52,14 +49,7 @@ def build_agent(env):
         Dense(num_actions),
     ])
 
-    policy = LinearAnnealedPolicy(
-        EpsGreedyQPolicy(),
-        attr="eps",
-        value_max=1.0,
-        value_min=0.1,
-        value_test=0.05,  # prevents getting stuck during testing
-        nb_steps=MEMORY_SIZE,
-    )
+    policy = BoltzmannGumbelQPolicy()
 
     memory = SequentialMemory(
         limit=MEMORY_SIZE,

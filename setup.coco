@@ -1,19 +1,23 @@
+# Imports:
 import setuptools
 
-import sys
-import os.path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Constants:
+NAME = "minecraft-deep-learning"
+VERSION = "0.0.1"
+DESCRIPTION = "Deep reinforcement learning in Minecraft using gym-minecraft and keras-rl."
+HOME_URL = "https://github.com/evhub/minecraft-deep-learning"
+AUTHOR = "Evan Hubinger"
+AUTHOR_EMAIL = "evanjhub@gmail.com"
+REQUIREMENTS = [
+    "gym",
+    "keras",
+    # "keras-rl",
+    "tensorflow",
+    "pygame",
+    "scipy",
+]
 
-from minecraft_deep_learning.constants import (
-    NAME,
-    VERSION,
-    DESCRIPTION,
-    HOME_URL,
-    AUTHOR,
-    AUTHOR_EMAIL,
-    REQUIREMENTS,
-)
-
+# Setup:
 setuptools.setup(
     name=NAME,
     version=VERSION,

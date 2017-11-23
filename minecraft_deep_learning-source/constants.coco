@@ -2,17 +2,36 @@
 import os
 import math
 
+import numpy as np
 import pygame
 
 # Global constants:
-DEBUG = False
+DEBUG = True
 SCALE = 1000 if not DEBUG else 10
+
+# Metrics:
+def reward_farther(x, y, scale=1.0, L=None) =
+    """Compute the distance between x and y using the given norm."""
+    np.linalg.norm(x - y, ord=L)*scale
+
+def reward_closer(x, y, scale=1.0, L=None) =
+    """Compute negative the distance between x and y using the given norm."""
+    reward_farther(x, y, scale=-scale, L=L)
+
+def gaussian_reward_closer(x, y, sigma=1.0, L=None) =
+    """Compute 1 - the distance between x and y using the given Gaussian."""
+    np.exp(reward_closer(x, y, scale=0.5/sigma, L=L))
+
+def gaussian_reward_farther(x, y, sigma=1.0, L=None) =
+    """Compute the distance between x and y using the given Gaussian."""
+    1 - gaussian_reward_closer(x, y, sigma=sigma, L=L)
 
 # Environment constants:
 ENV_NAME = "MinecraftDefaultFlat1-v0"
 IMAGE_SIZE = (240, 320)  # (height, width)
 OBSERVE_DEPTH = False
-SKIP_FRAMES = 0
+DISCRETE_ACTIONS = False
+CONTINUOUS_ACTIONS = True
 KEYMAP = {
     pygame.K_w: "move 1",
     pygame.K_s: "move -1",
@@ -20,24 +39,23 @@ KEYMAP = {
     pygame.K_a: "turn -1",
     pygame.K_e: "strafe 1",
     pygame.K_q: "strafe -1",
+    pygame.K_SPACE: "move 0\nturn 0",
 }
 USE_ACTIONS = KEYMAP.values() |> sorted |> list
-REWARD_POSITION = {
-    # "x|y|z": (offset, reward per unit away)
-    "x": (19.5, -0.1),
-    "z": (19.5, -0.1),
+MODIFY_REWARDS = {
+    100: 0.9,
 }
-REWARD_POSITION_NORM = 1
-DISABLE_REWARDS = (
-    -1000,
-    -1001,
+REWARD_POSITION = (
+    {"x": 19.5, "z": 19.5},
+    gaussian_reward_closer$(sigma=18, L=1),
 )
+REWARD_ANGLE = (19.5, 19.5, 0.1)  # (x, z, max reward from angle)
 
 # Model constants:
 DOWNSAMPLE = 5
 GRAYSCALE = True
 TRIM_HEIGHT = False
-WINDOW_SIZE = 3
+WINDOW_SIZE = 4
 CONV_LAYERS = (
     # (filters, size, strides)
     (16, (8, 8), (4, 4)),
@@ -76,6 +94,7 @@ ESTIMATED_TIME = "{} mins".format(
 
 # Main constants:
 LOG_INTERVAL = NUM_STEPS//20
+DEBUG_LOG_INTERVAL = LOG_INTERVAL//10
 TESTING_EPISODES = 10
 
 WEIGHTS_DIR = (
@@ -86,17 +105,3 @@ WEIGHTS_DIR = (
 )
 if not os.path.exists(WEIGHTS_DIR):
     os.mkdir(WEIGHTS_DIR)
-
-# Installation constants:
-NAME = "minecraft-deep-learning"
-VERSION = "0.0.1"
-DESCRIPTION = "Deep reinforcement learning in Minecraft using gym-minecraft and keras-rl."
-HOME_URL = "https://github.com/evhub/minecraft-deep-learning"
-AUTHOR = "Evan Hubinger"
-AUTHOR_EMAIL = "evanjhub@gmail.com"
-REQUIREMENTS = [
-    "gym",
-    "keras-rl",
-    "tensorflow",
-    "pygame",
-]

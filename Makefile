@@ -1,14 +1,14 @@
-.PHONY: test
-test: install
-	python minecraft_deep_learning --mode test
+.PHONY: play
+play: install
+	python minecraft_deep_learning --mode play
 
 .PHONY: train
 train: install
 	python minecraft_deep_learning --mode train
 
-.PHONY: play
-play: install
-	python minecraft_deep_learning --mode play
+.PHONY: test
+test: install
+	python minecraft_deep_learning --mode test
 
 .PHONY: install
 install: build
