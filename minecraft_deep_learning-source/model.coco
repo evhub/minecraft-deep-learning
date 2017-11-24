@@ -61,8 +61,8 @@ def build_agent():
 
     policy = BoltzmannGumbelQPolicy(C=BGE_C)
     test_policy = BoltzmannQPolicy(tau=BE_TAU)
+    print("BGE beta annealing plan: {} -> {}".format(BGE_C, BE_TAU))
     if DEBUG:
-        print("BGE_C: {}; BE_TAU: {}".format(BGE_C, BE_TAU))
         policy._counter = 0
         old_select_action = policy.select_action
         def policy.select_action(q_values):
