@@ -17,9 +17,11 @@ from minecraft_deep_learning.display import (
 from minecraft_deep_learning.constants import (
     NUM_STEPS,
     LOG_INTERVAL,
+    DEBUG_LOG_INTERVAL,
     TESTING_EPISODES,
     WEIGHTS_DIR,
     ESTIMATED_TIME,
+    RANDOM_START_STEPS,
 )
 
 # Argument parser:
@@ -61,30 +63,36 @@ def run_agent(env, args):
             print("received reward: {}".format(reward))
 
     elif args.mode == "train":
-        agent = build_agent(env)
-        print("estimated training time: {}".format(ESTIMATED_TIME))
+        agent = build_agent()
+        print("Estimated training time: {}".format(ESTIMATED_TIME))
         callbacks = [
             ModelIntervalCheckpoint(
                 os.path.join(WEIGHTS_DIR, "weights_{step}.h5f"),
                 interval=LOG_INTERVAL,
             ),
             FileLogger(
-                os.path.join(WEIGHTS_DIR, "log_{step}.json"),
-                interval=LOG_INTERVAL,
+                os.path.join(WEIGHTS_DIR, "log.json"),
+                interval=DEBUG_LOG_INTERVAL,
             ),
         ]
         agent.fit(
             env,
             callbacks=callbacks,
             nb_steps=NUM_STEPS,
+            nb_max_start_steps=RANDOM_START_STEPS,
             log_interval=LOG_INTERVAL,
         )
         agent.save_weights(final_weights_file, overwrite=True)
 
     elif args.mode == "test":
-        agent = build_agent(env)
+        agent = build_agent()
         agent.load_weights(args.weights)
-        agent.test(env, nb_episodes=TESTING_EPISODES, visualize=False)
+        agent.test(
+            env,
+            nb_episodes=TESTING_EPISODES,
+            nb_max_start_steps=RANDOM_START_STEPS,
+            visualize=False,
+        )
 
     else:
         raise ValueError("unknown --mode {!r}".format(args.mode))

@@ -6,8 +6,8 @@ import numpy as np
 import pygame
 
 # Global constants:
-DEBUG = True
-SCALE = 1000 if not DEBUG else 10
+DEBUG = False
+SCALE = 1250 if not DEBUG else 10
 
 # Metrics:
 def reward_farther(x, y, scale=1.0, L=None) =
@@ -39,7 +39,6 @@ KEYMAP = {
     pygame.K_a: "turn -1",
     pygame.K_e: "strafe 1",
     pygame.K_q: "strafe -1",
-    pygame.K_SPACE: "move 0\nturn 0",
 }
 USE_ACTIONS = KEYMAP.values() |> sorted |> list
 MODIFY_REWARDS = {
@@ -64,7 +63,7 @@ CONV_LAYERS = (
 DENSE_LAYERS = (
     256,
 )
-MEMORY_SIZE = 100*SCALE
+MEMORY_SIZE = 500*SCALE
 DOUBLE_DQN = True
 DUELING = True
 
@@ -78,9 +77,11 @@ INPUT_SIZE = (
 
 # Training constants:
 NUM_STEPS = 1000*SCALE
-WARMUP_STEPS = 10*SCALE
+WARMUP_STEPS = 5*SCALE
+RANDOM_START_STEPS = int(math.log10(SCALE))
 TARGET_UPDATE_PERIOD = SCALE
 SOFT_UPDATE_TARGET = True
+BGE_C = 0.25*math.sqrt(len(USE_ACTIONS)*math.log(NUM_STEPS))
 
 TARGET_UPDATE = (
     1/TARGET_UPDATE_PERIOD if SOFT_UPDATE_TARGET
@@ -96,6 +97,7 @@ ESTIMATED_TIME = "{} mins".format(
 LOG_INTERVAL = NUM_STEPS//20
 DEBUG_LOG_INTERVAL = LOG_INTERVAL//10
 TESTING_EPISODES = 10
+BE_TAU = BGE_C/math.sqrt(NUM_STEPS/len(USE_ACTIONS))
 
 WEIGHTS_DIR = (
     __file__

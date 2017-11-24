@@ -1,4 +1,6 @@
 # Imports:
+from pprint import pprint
+
 from keras.models import Sequential
 from keras.backend import image_data_format
 from keras.optimizers import Nadam
@@ -9,8 +11,11 @@ from keras.layers import (
     Permute,
 )
 from rl.agents.dqn import DQNAgent
-from rl.policy import BoltzmannGumbelQPolicy
 from rl.memory import SequentialMemory
+from rl.policy import (
+    BoltzmannGumbelQPolicy,
+    BoltzmannQPolicy,
+)
 
 from minecraft_deep_learning.processor import MinecraftProcessor
 from minecraft_deep_learning.constants import (
@@ -24,12 +29,17 @@ from minecraft_deep_learning.constants import (
     DUELING,
     DOUBLE_DQN,
     TARGET_UPDATE,
+    BGE_C,
+    LOG_INTERVAL,
+    USE_ACTIONS,
+    DEBUG,
+    BE_TAU,
 )
 
 # Model setup:
-def build_agent(env):
+def build_agent():
     """Build an agent for the given environment."""
-    num_actions = env.action_space.n
+    num_actions = len(USE_ACTIONS)
 
     model = Sequential([
         Permute(
@@ -49,7 +59,21 @@ def build_agent(env):
         Dense(num_actions),
     ])
 
-    policy = BoltzmannGumbelQPolicy()
+    policy = BoltzmannGumbelQPolicy(C=BGE_C)
+    test_policy = BoltzmannQPolicy(tau=BE_TAU)
+    if DEBUG:
+        print("BGE_C: {}; BE_TAU: {}".format(BGE_C, BE_TAU))
+        policy._counter = 0
+        old_select_action = policy.select_action
+        def policy.select_action(q_values):
+            action = old_select_action(q_values)
+            if policy._counter % LOG_INTERVAL == 0:
+                pprint({
+                    USE_ACTIONS[action_index]: action_count
+                    for action_index, action_count in enumerate(policy.action_counts)
+                })
+            policy._counter += 1
+            return action
 
     memory = SequentialMemory(
         limit=MEMORY_SIZE,
@@ -62,13 +86,14 @@ def build_agent(env):
         model=model,
         nb_actions=num_actions,
         policy=policy,
+        test_policy=test_policy,
         memory=memory,
         processor=processor,
         nb_steps_warmup=WARMUP_STEPS,
-        train_interval=WINDOW_SIZE,
-        enable_dueling_network=DUELING,
-        enable_double_dqn=DOUBLE_DQN,
         target_model_update=TARGET_UPDATE,
+        train_interval=WINDOW_SIZE,
+        enable_double_dqn=DOUBLE_DQN,
+        enable_dueling_network=DUELING,
     )
     agent.compile(
         optimizer=Nadam(),

@@ -6,7 +6,7 @@ Deep reinforcement learning in Minecraft using [gym-minecraft](https://github.co
 
 First, you will need to install [gym-minecraft](https://github.com/tambetm/gym-minecraft) manually. Then:
 
-1. to play the game yourself, run
+1. to play the environment yourself, run
 ```
 make play
 ```

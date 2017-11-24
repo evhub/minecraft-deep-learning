@@ -111,7 +111,7 @@ class MinecraftProcessor(Processor):
 
     def process_reward(self, reward, info):
         if DEBUG:
-            reward_history = [(reward, "original")]
+            reward_history = [(reward, None)]
         if MODIFY_REWARDS and reward in MODIFY_REWARDS:
             reward = MODIFY_REWARDS[reward]
             if DEBUG:
@@ -145,11 +145,22 @@ class MinecraftProcessor(Processor):
                 yaw_diff = abs(yaw - desired_yaw)
                 reward += max_angle_reward * min(yaw_diff, 360 - yaw_diff)/180
                 if DEBUG:
-                    reward_history.append((reward, "angle {}".format(yaw)))
+                    reward_history.append((reward, "got angle {}; desired angle {}".format(yaw, desired_yaw)))
 
         if DEBUG and (
             self.counter % DEBUG_LOG_INTERVAL == 0
             or any(not 0 <= r < 1 for r, why in reward_history)
         ):
-            print("\nreward: " + " -> ".join("{} ({})".format(r, why) for r, why in reward_history))
+            prev_reward = reward_history[0][0]
+            reward_str = "\nreward: {}".format(prev_reward)
+            for i in range(1, len(reward_history)):
+                reward_i, reason = reward_history[i]
+                reward_diff = reward_i - prev_reward
+                if reward_diff >= 0:
+                    reward_str += " + {}".format(reward_diff)
+                else:
+                    reward_str += " - {}".format(-reward_diff)
+                reward_str += " ({})".format(reason)
+                prev_reward = reward_i
+            print("{} = {}".format(reward_str, reward))
         return reward

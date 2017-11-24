@@ -1,7 +1,4 @@
 # Imports:
-from collections import defaultdict
-from pprint import pprint
-
 import gym
 
 from minecraft_deep_learning.constants import (
@@ -10,7 +7,6 @@ from minecraft_deep_learning.constants import (
     USE_ACTIONS,
     OBSERVE_DEPTH,
     DEBUG,
-    LOG_INTERVAL,
     DEBUG_LOG_INTERVAL,
     DISCRETE_ACTIONS,
     CONTINUOUS_ACTIONS,
@@ -34,15 +30,11 @@ def build_environment():
     if DEBUG:
         print("actions: {} -> {}".format(env.action_names[0], USE_ACTIONS))
         env._counter = 0
-        env._action_counts = defaultdict(int)
         old_step = env.step
         def env.step(action_index):
-            action_name = USE_ACTIONS[action_index]
-            env._action_counts[action_name] += 1
             if env._counter % DEBUG_LOG_INTERVAL == 0:
-                print("action: {}".format(action_name))
-            if env._counter % LOG_INTERVAL == 0 and env._counter:
-                pprint(env._action_counts)
+                action_name = USE_ACTIONS[action_index]
+                print("\naction: {}".format(action_name))
             env._counter += 1
             return old_step(action_index)
     use_action_space = gym.spaces.Discrete(len(USE_ACTIONS))
