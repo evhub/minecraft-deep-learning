@@ -7,31 +7,31 @@ import pygame
 
 # Global constants:
 DEBUG = False
-SCALE = 1250 if not DEBUG else 10
+SCALE = 1000 if not DEBUG else 10
 
 # Metrics:
-def reward_farther(x, y, scale=1.0, L=None) =
+def reward_farther(x, y, scale=1, L=None) =
     """Compute the distance between x and y using the given norm."""
-    np.linalg.norm(x - y, ord=L)*scale
+    scale * np.linalg.norm(x - y, ord=L)
 
-def reward_closer(x, y, scale=1.0, L=None) =
+def reward_closer(x, y, scale=1, L=None) =
     """Compute negative the distance between x and y using the given norm."""
     reward_farther(x, y, scale=-scale, L=L)
 
-def gaussian_reward_closer(x, y, sigma=1.0, L=None) =
+def gaussian_reward_closer(x, y, scale=1, sigma=1, L=None) =
     """Compute 1 - the distance between x and y using the given Gaussian."""
-    np.exp(reward_closer(x, y, scale=0.5/sigma, L=L))
+    scale * np.exp(reward_closer(x, y, scale=0.5/sigma, L=L))
 
-def gaussian_reward_farther(x, y, sigma=1.0, L=None) =
+def gaussian_reward_farther(x, y, scale=1, sigma=1, L=None) =
     """Compute the distance between x and y using the given Gaussian."""
-    1 - gaussian_reward_closer(x, y, sigma=sigma, L=L)
+    scale - gaussian_reward_closer(x, y, scale=scale, sigma=sigma, L=L)
 
 # Environment constants:
 ENV_NAME = "MinecraftDefaultFlat1-v0"
-IMAGE_SIZE = (240, 320)  # (height, width)
+IMAGE_SIZE = (192, 256)  # (height, width)
 OBSERVE_DEPTH = False
-DISCRETE_ACTIONS = False
 CONTINUOUS_ACTIONS = True
+DISCRETE_ACTIONS = False
 KEYMAP = {
     pygame.K_w: "move 1",
     pygame.K_s: "move -1",
@@ -42,28 +42,35 @@ KEYMAP = {
 }
 USE_ACTIONS = KEYMAP.values() |> sorted |> list
 MODIFY_REWARDS = {
-    100: 0.9,
+    100: 1,
 }
 REWARD_POSITION = (
     {"x": 19.5, "z": 19.5},
-    gaussian_reward_closer$(sigma=18, L=1),
+    gaussian_reward_closer$(scale=1.5, sigma=18, L=1),
 )
-REWARD_ANGLE = (19.5, 19.5, 0.1)  # (x, z, max reward from angle)
+REWARD_ANGLE = (19.5, 19.5, 0.5)  # (x, z, max reward from angle)
+REWARD_OFFSET = (
+    REWARD_ANGLE[-1]/2
+    + REWARD_POSITION[-1](
+        np.array([0.5, 0.5]),
+        np.array([19.5, 19.5]),
+    )
+)
 
 # Model constants:
-DOWNSAMPLE = 5
+DOWNSAMPLE = 4
 GRAYSCALE = True
 TRIM_HEIGHT = False
 WINDOW_SIZE = 4
 CONV_LAYERS = (
     # (filters, size, strides)
-    (16, (8, 8), (4, 4)),
-    (32, (4, 4), (2, 2)),
+    (32, (8, 8), (4, 4)),
+    (64, (4, 4), (2, 2)),
 )
 DENSE_LAYERS = (
-    256,
+    512,
 )
-MEMORY_SIZE = 500*SCALE
+MEMORY_SIZE = 200*SCALE
 DOUBLE_DQN = True
 DUELING = True
 
@@ -80,8 +87,8 @@ NUM_STEPS = 1000*SCALE
 WARMUP_STEPS = 5*SCALE
 RANDOM_START_STEPS = int(math.log10(SCALE))
 TARGET_UPDATE_PERIOD = SCALE
-SOFT_UPDATE_TARGET = True
-BGE_C = 0.1*math.sqrt(len(USE_ACTIONS)*math.log(NUM_STEPS))
+SOFT_UPDATE_TARGET = False
+BGE_C = 0.2*math.sqrt(len(USE_ACTIONS)*math.log(NUM_STEPS))
 
 TARGET_UPDATE = (
     1/TARGET_UPDATE_PERIOD if SOFT_UPDATE_TARGET
@@ -97,7 +104,7 @@ ESTIMATED_TIME = "{} mins".format(
 LOG_INTERVAL = NUM_STEPS//20
 DEBUG_LOG_INTERVAL = LOG_INTERVAL//10
 TESTING_EPISODES = 10
-BE_TAU = BGE_C/math.sqrt(NUM_STEPS/len(USE_ACTIONS))
+TESTING_TAU = BGE_C/math.sqrt(NUM_STEPS/len(USE_ACTIONS))
 
 WEIGHTS_DIR = (
     __file__

@@ -21,6 +21,7 @@ from minecraft_deep_learning.constants import (
     MODIFY_REWARDS,
     REWARD_POSITION,
     REWARD_ANGLE,
+    REWARD_OFFSET,
 )
 from minecraft_deep_learning.display import (
     create_screen,
@@ -116,6 +117,10 @@ class MinecraftProcessor(Processor):
             reward = MODIFY_REWARDS[reward]
             if DEBUG:
                 reward_history.append((reward, "modified"))
+        if REWARD_OFFSET:
+            reward -= REWARD_OFFSET
+            if DEBUG:
+                reward_history.append((reward, "offset"))
         if info["observation"] is not None:
 
             if REWARD_POSITION:
@@ -149,7 +154,7 @@ class MinecraftProcessor(Processor):
 
         if DEBUG and (
             self.counter % DEBUG_LOG_INTERVAL == 0
-            or any(not 0 <= r < 1 for r, why in reward_history)
+            or any(abs(r) > 1 for r, why in reward_history)
         ):
             prev_reward = reward_history[0][0]
             reward_str = "\nreward: {}".format(prev_reward)
@@ -157,10 +162,10 @@ class MinecraftProcessor(Processor):
                 reward_i, reason = reward_history[i]
                 reward_diff = reward_i - prev_reward
                 if reward_diff >= 0:
-                    reward_str += " + {}".format(reward_diff)
+                    reward_str += "\t+ {}".format(reward_diff)
                 else:
-                    reward_str += " - {}".format(-reward_diff)
+                    reward_str += "\t- {}".format(-reward_diff)
                 reward_str += " ({})".format(reason)
                 prev_reward = reward_i
-            print("{} = {}".format(reward_str, reward))
+            print("{}\t= {}".format(reward_str, reward))
         return reward
