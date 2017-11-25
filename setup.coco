@@ -11,8 +11,8 @@ AUTHOR_EMAIL = "evanjhub@gmail.com"
 REQUIREMENTS = [
     "gym",
     "keras",
-    # "keras-rl",
-    "tensorflow",
+    "keras-rl",
+    "tensorflow-gpu",
     "pygame",
     "scipy",
 ]
