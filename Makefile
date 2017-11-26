@@ -10,6 +10,10 @@ train: install
 test: install
 	python minecraft_deep_learning --mode test
 
+.PHONY: quiver
+quiver: install
+	python minecraft_deep_learning --mode quiver
+
 .PHONY: install
 install: build
 	pip install -e .
@@ -31,7 +35,7 @@ clean:
 
 .PHONY: wipe
 wipe: clean
-	rm -rf ./minecraft_deep_learning ./saved_weights ./saved_logs
+	rm -rf ./minecraft_deep_learning ./saved_weights ./saved_logs ./saved_images
 	find . -name '*.py' -delete
 
 .PHONY: tensorboard

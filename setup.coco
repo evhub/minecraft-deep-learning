@@ -15,6 +15,7 @@ REQUIREMENTS = [
     "tensorflow-gpu",
     "pygame",
     "scipy",
+    "quiver_engine",
 ]
 
 # Setup:

@@ -127,6 +127,7 @@ BASE_DIR = (
 )
 WEIGHTS_DIR = os.path.join(BASE_DIR, "saved_weights")
 LOGS_DIR = os.path.join(BASE_DIR, "saved_logs")
-for need_dir in (WEIGHTS_DIR, LOGS_DIR):
+IMAGES_DIR = os.path.join(BASE_DIR, "saved_images")
+for need_dir in (WEIGHTS_DIR, LOGS_DIR, IMAGES_DIR):
     if not os.path.exists(need_dir):
         os.mkdir(need_dir)

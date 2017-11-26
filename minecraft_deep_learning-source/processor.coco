@@ -1,5 +1,6 @@
 # Imports:
 import math
+import os.path
 from pprint import pprint
 
 import numpy as np
@@ -22,6 +23,7 @@ from minecraft_deep_learning.constants import (
     REWARD_POSITION,
     REWARD_ANGLE,
     REWARD_OFFSET,
+    IMAGES_DIR,
 )
 from minecraft_deep_learning.display import (
     create_screen,
@@ -72,6 +74,11 @@ class MinecraftProcessor(Processor):
             height = processed_observation.shape[0]
             processed_observation = processed_observation[height//2:]
         assert processed_observation.shape == INPUT_SIZE + ((CHANNELS,) if CHANNELS > 1 else ()), processed_observation.shape
+
+        if DEBUG and self.counter % LOG_INTERVAL == 0:
+            image_file = os.path.join(IMAGES_DIR, "obs_{}.png".format(self.counter))
+            Image.fromarray(processed_observation).save(image_file)
+
         if self.screen is not None:
             display_image = (
                 processed_observation
@@ -84,6 +91,7 @@ class MinecraftProcessor(Processor):
             assert display_image.shape == self.screen_size + (3,), (display_image.shape, self.screen_size + (3,))
             show_array(self.screen, display_image)
             self.handle_events()
+
         return processed_observation
 
     def process_state_batch(self, batch):

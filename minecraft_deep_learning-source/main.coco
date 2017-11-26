@@ -2,6 +2,8 @@
 import os.path
 import argparse
 
+from quiver_engine import server
+
 from minecraft_deep_learning.environment import build_environment
 from minecraft_deep_learning.model import build_agent
 from minecraft_deep_learning.processor import MinecraftProcessor
@@ -17,6 +19,10 @@ from minecraft_deep_learning.constants import (
     WEIGHTS_DIR,
     ESTIMATED_TIME,
     RANDOM_START_STEPS,
+    DUELING,
+    USE_ACTIONS,
+    LOGS_DIR,
+    IMAGES_DIR,
 )
 
 # Argument parser:
@@ -25,7 +31,7 @@ final_weights_file = os.path.join(WEIGHTS_DIR, "weights_final.h5f")
 arguments = argparse.ArgumentParser()
 arguments.add_argument(
     "--mode",
-    choices=["train", "test", "play"],
+    choices=["train", "test", "play", "quiver"],
     default="train",
 )
 arguments.add_argument(
@@ -35,61 +41,75 @@ arguments.add_argument(
 )
 
 # Argument handling:
-def run_agent(env, args):
-    """Follow the given parsed arguments in the given environment."""
-    if args.mode == "play":
-        proc = MinecraftProcessor(always_show_rewards=True)
-        proc.use_display()
-        proc._action = env.action_space.sample()
-        def proc.handle_events():
-            action_name = None
-            while action_name is None:
-                action_name = get_pressed_action()
-            proc._action = env.action_names[0].index(action_name)
-        done = True
-        while True:
-            if done:
-                env.reset()
-            obs, reward, done, info = (
-                proc._action
-                |> env.step
-                |*> proc.process_step
+def run(args):
+    """Process the given parsed arguments."""
+    env = None
+    try:
+        if args.mode == "play":
+            env = build_environment()
+            proc = MinecraftProcessor(always_show_rewards=True)
+            proc.use_display()
+            proc._action = env.action_space.sample()
+            def proc.handle_events():
+                action_name = None
+                while action_name is None:
+                    action_name = get_pressed_action()
+                proc._action = env.action_names[0].index(action_name)
+            done = True
+            while True:
+                if done:
+                    env.reset()
+                obs, reward, done, info = (
+                    proc._action
+                    |> env.step
+                    |*> proc.process_step
+                )
+
+        elif args.mode == "train":
+            agent, env = build_agent(), build_environment()
+            print("Estimated training time: {}".format(ESTIMATED_TIME))
+            agent.fit(
+                env,
+                callbacks=use_callbacks,
+                nb_steps=NUM_STEPS,
+                nb_max_start_steps=RANDOM_START_STEPS,
+                log_interval=LOG_INTERVAL,
+            )
+            agent.save_weights(final_weights_file, overwrite=True)
+
+        elif args.mode == "test":
+            agent, env = build_agent(), build_environment()
+            agent.load_weights(args.weights)
+            agent.test(
+                env,
+                nb_episodes=TESTING_EPISODES,
+                nb_max_start_steps=RANDOM_START_STEPS,
+                visualize=False,
             )
 
-    elif args.mode == "train":
-        agent = build_agent()
-        print("Estimated training time: {}".format(ESTIMATED_TIME))
-        agent.fit(
-            env,
-            callbacks=use_callbacks,
-            nb_steps=NUM_STEPS,
-            nb_max_start_steps=RANDOM_START_STEPS,
-            log_interval=LOG_INTERVAL,
-        )
-        agent.save_weights(final_weights_file, overwrite=True)
+        elif args.mode == "quiver":
+            agent = build_agent()
+            agent.load_weights(args.weights)
+            server.launch(
+                agent.model,
+                (["value"] if DUELING else []) + USE_ACTIONS,
+                temp_folder=LOGS_DIR,
+                input_folder=IMAGES_DIR,
+            )
 
-    elif args.mode == "test":
-        agent = build_agent()
-        agent.load_weights(args.weights)
-        agent.test(
-            env,
-            nb_episodes=TESTING_EPISODES,
-            nb_max_start_steps=RANDOM_START_STEPS,
-            visualize=False,
-        )
-
-    else:
-        raise ValueError("unknown --mode {!r}".format(args.mode))
+        else:
+            raise ValueError("unknown --mode {!r}".format(args.mode))
+    finally:
+        if env is not None:
+            env.close()
 
 def main(raw_args=None):
-    """Parse arguments, build environment, and run agent."""
+    """Parse arguments and pass them to run."""
     if raw_args is None:
         args = arguments.parse_args()
     else:
         args = arguments.parse_args(raw_args)
-    env = build_environment()
     try:
-        run_agent(env, args)
+        run(args)
     finally:
         close_display()
-        env.close()
