@@ -6,8 +6,6 @@ from minecraft_deep_learning.constants import (
     IMAGE_SIZE,
     USE_ACTIONS,
     OBSERVE_DEPTH,
-    DEBUG,
-    DEBUG_LOG_INTERVAL,
     DISCRETE_ACTIONS,
     CONTINUOUS_ACTIONS,
 )
@@ -27,16 +25,7 @@ def build_environment():
     )
     assert isinstance(env.action_space, gym.spaces.Discrete), env.action_space
     assert len(env.action_names) == 1 and len(env.action_spaces) == 1, (env.action_names, env.action_spaces)
-    if DEBUG:
-        print("actions: {} -> {}".format(env.action_names[0], USE_ACTIONS))
-        env._counter = 0
-        old_step = env.step
-        def env.step(action_index):
-            if env._counter % DEBUG_LOG_INTERVAL == 0:
-                action_name = USE_ACTIONS[action_index]
-                print("\naction: {}".format(action_name))
-            env._counter += 1
-            return old_step(action_index)
+    print("Using actions: {} -> {}".format(env.action_names[0], USE_ACTIONS))
     use_action_space = gym.spaces.Discrete(len(USE_ACTIONS))
     env.action_names = [USE_ACTIONS]
     env.action_spaces = [use_action_space]

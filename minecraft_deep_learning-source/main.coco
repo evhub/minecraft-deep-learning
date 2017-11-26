@@ -2,14 +2,10 @@
 import os.path
 import argparse
 
-from rl.callbacks import (
-    FileLogger,
-    ModelIntervalCheckpoint,
-)
-
 from minecraft_deep_learning.environment import build_environment
 from minecraft_deep_learning.model import build_agent
 from minecraft_deep_learning.processor import MinecraftProcessor
+from minecraft_deep_learning.callbacks import use_callbacks
 from minecraft_deep_learning.display import (
     close_display,
     get_pressed_action,
@@ -17,7 +13,6 @@ from minecraft_deep_learning.display import (
 from minecraft_deep_learning.constants import (
     NUM_STEPS,
     LOG_INTERVAL,
-    DEBUG_LOG_INTERVAL,
     TESTING_EPISODES,
     WEIGHTS_DIR,
     ESTIMATED_TIME,
@@ -43,7 +38,7 @@ arguments.add_argument(
 def run_agent(env, args):
     """Follow the given parsed arguments in the given environment."""
     if args.mode == "play":
-        proc = MinecraftProcessor()
+        proc = MinecraftProcessor(always_show_rewards=True)
         proc.use_display()
         proc._action = env.action_space.sample()
         def proc.handle_events():
@@ -60,24 +55,13 @@ def run_agent(env, args):
                 |> env.step
                 |*> proc.process_step
             )
-            print("received reward: {}".format(reward))
 
     elif args.mode == "train":
         agent = build_agent()
         print("Estimated training time: {}".format(ESTIMATED_TIME))
-        callbacks = [
-            ModelIntervalCheckpoint(
-                os.path.join(WEIGHTS_DIR, "weights_{step}.h5f"),
-                interval=LOG_INTERVAL,
-            ),
-            FileLogger(
-                os.path.join(WEIGHTS_DIR, "log.json"),
-                interval=DEBUG_LOG_INTERVAL,
-            ),
-        ]
         agent.fit(
             env,
-            callbacks=callbacks,
+            callbacks=use_callbacks,
             nb_steps=NUM_STEPS,
             nb_max_start_steps=RANDOM_START_STEPS,
             log_interval=LOG_INTERVAL,

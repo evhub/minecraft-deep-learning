@@ -31,8 +31,13 @@ clean:
 
 .PHONY: wipe
 wipe: clean
-	rm -rf ./minecraft_deep_learning ./stored_weights
+	rm -rf ./minecraft_deep_learning ./saved_weights ./saved_logs
 	find . -name '*.py' -delete
+
+.PHONY: tensorboard
+tensorboard:
+	open http://localhost:6006
+	tensorboard --logdir=./saved_logs
 
 .PHONY: watch
 watch:

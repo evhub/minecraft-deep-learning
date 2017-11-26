@@ -68,6 +68,7 @@ def build_agent():
         def policy.select_action(q_values):
             action = old_select_action(q_values)
             if policy._counter % LOG_INTERVAL == 0:
+                print()
                 pprint({
                     USE_ACTIONS[action_index]: action_count
                     for action_index, action_count in enumerate(policy.action_counts)

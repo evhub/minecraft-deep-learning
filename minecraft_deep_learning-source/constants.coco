@@ -26,9 +26,19 @@ def gaussian_reward_farther(x, y, scale=1, sigma=1, L=None) =
     """Compute the distance between x and y using the given Gaussian."""
     scale - gaussian_reward_closer(x, y, scale=scale, sigma=sigma, L=L)
 
+def angle_reward_farther(x, y, scale=1) =
+    """Compute the distance between two angles in degrees."""
+    scale * angle_dist where:
+        raw_dist = abs(x - y)
+        angle_dist = min(raw_dist, 360 - raw_dist)/180
+
+def angle_reward_closer(x, y, scale=1) =
+    """Compute 1 - the distance between two angles in degrees."""
+    scale - angle_reward_farther(x, y, scale=scale)
+
 # Environment constants:
 ENV_NAME = "MinecraftDefaultFlat1-v0"
-IMAGE_SIZE = (192, 256)  # (height, width)
+IMAGE_SIZE = (288, 384)  # (height, width)
 OBSERVE_DEPTH = False
 CONTINUOUS_ACTIONS = True
 DISCRETE_ACTIONS = False
@@ -46,11 +56,14 @@ MODIFY_REWARDS = {
 }
 REWARD_POSITION = (
     {"x": 19.5, "z": 19.5},
-    gaussian_reward_closer$(scale=1.5, sigma=18, L=1),
+    gaussian_reward_closer$(scale=1.75, sigma=18, L=1),
 )
-REWARD_ANGLE = (19.5, 19.5, 0.5)  # (x, z, max reward from angle)
+REWARD_ANGLE = (
+    19.5, 19.5,  # x, z
+    angle_reward_closer$(scale=0.25),
+)
 REWARD_OFFSET = (
-    REWARD_ANGLE[-1]/2
+    REWARD_ANGLE[-1](0, 90)
     + REWARD_POSITION[-1](
         np.array([0.5, 0.5]),
         np.array([19.5, 19.5]),
@@ -66,11 +79,12 @@ CONV_LAYERS = (
     # (filters, size, strides)
     (32, (8, 8), (4, 4)),
     (64, (4, 4), (2, 2)),
+    (64, (3, 3), (1, 1)),
 )
 DENSE_LAYERS = (
     512,
 )
-MEMORY_SIZE = 200*SCALE
+MEMORY_SIZE = 250*SCALE
 DOUBLE_DQN = True
 DUELING = True
 
@@ -106,11 +120,13 @@ DEBUG_LOG_INTERVAL = LOG_INTERVAL//10
 TESTING_EPISODES = 10
 TESTING_TAU = BGE_C/math.sqrt(NUM_STEPS/len(USE_ACTIONS))
 
-WEIGHTS_DIR = (
+BASE_DIR = (
     __file__
     |> os.path.dirname
     |> os.path.dirname
-    |> os.path.join$(?, "stored_weights")
 )
-if not os.path.exists(WEIGHTS_DIR):
-    os.mkdir(WEIGHTS_DIR)
+WEIGHTS_DIR = os.path.join(BASE_DIR, "saved_weights")
+LOGS_DIR = os.path.join(BASE_DIR, "saved_logs")
+for need_dir in (WEIGHTS_DIR, LOGS_DIR):
+    if not os.path.exists(need_dir):
+        os.mkdir(need_dir)
