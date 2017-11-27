@@ -1,8 +1,12 @@
 # Imports:
 import os.path
 import argparse
+import shutil
 
+import tensorflow as tf
 from quiver_engine import server
+from keras.models import Sequential
+from keras.layers import Lambda
 
 from minecraft_deep_learning.environment import build_environment
 from minecraft_deep_learning.model import build_agent
@@ -19,10 +23,12 @@ from minecraft_deep_learning.constants import (
     WEIGHTS_DIR,
     ESTIMATED_TIME,
     RANDOM_START_STEPS,
-    DUELING,
     USE_ACTIONS,
-    LOGS_DIR,
     IMAGES_DIR,
+    INPUT_SIZE,
+    CHANNELS,
+    WINDOW_SIZE,
+    BASE_DIR,
 )
 
 # Argument parser:
@@ -90,12 +96,36 @@ def run(args):
         elif args.mode == "quiver":
             agent = build_agent()
             agent.load_weights(args.weights)
-            server.launch(
-                agent.model,
-                (["value"] if DUELING else []) + USE_ACTIONS,
-                temp_folder=LOGS_DIR,
-                input_folder=IMAGES_DIR,
-            )
+            quiver_model = Sequential([
+                Lambda(tensor ->
+                    tensor/255.0
+                    |> tensor -> [tensor]*WINDOW_SIZE
+                    |> tf.stack
+                    |> tf.transpose$(perm=[1, 0, 4, 2, 3])
+                    |> tf.reshape$(shape=(-1, CHANNELS * WINDOW_SIZE) + INPUT_SIZE),
+                    input_shape=INPUT_SIZE + (CHANNELS,)
+                ),
+            ] + [
+                (def layer ->
+                    layer.inbound_nodes = [];
+                    layer)(layer)
+                for layer in agent.model.layers
+            ])
+            temp_dir = os.path.join(BASE_DIR, "tmp")
+            p_dir = os.path.join(BASE_DIR, "-p")
+            try:
+                server.launch(
+                    quiver_model,
+                    USE_ACTIONS,
+                    temp_folder=temp_dir,
+                    input_folder=IMAGES_DIR,
+                )
+            finally:
+                print("Shutting down...")
+                if os.path.exists(temp_dir):
+                    shutil.rmtree(temp_dir)
+                if os.path.exists(p_dir):
+                    shutil.rmtree(p_dir)
 
         else:
             raise ValueError("unknown --mode {!r}".format(args.mode))

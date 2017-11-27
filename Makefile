@@ -29,14 +29,14 @@ setup:
 
 .PHONY: clean
 clean:
-	rm -rf ./dist ./build
+	rm -rf ./dist ./build ./minecraft_deep_learning
 	find . -name '*.pyc' -delete
 	find . -name '__pycache__' -delete
+	find . -name '*.py' -delete
 
 .PHONY: wipe
 wipe: clean
-	rm -rf ./minecraft_deep_learning ./saved_weights ./saved_logs ./saved_images
-	find . -name '*.py' -delete
+	rm -rf ./saved_weights ./saved_logs ./saved_images
 
 .PHONY: tensorboard
 tensorboard:
