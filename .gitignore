@@ -111,5 +111,5 @@ ENV/
 
 # Saved data
 saved_weights/
-saved_logs/
+saved_data/
 saved_images/

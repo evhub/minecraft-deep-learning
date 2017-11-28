@@ -119,16 +119,20 @@ class MinecraftProcessor(Processor):
             pprint(info)
         return info
 
+    @property
+    def show_rewards(self) =
+        DEBUG or self.always_show_rewards
+
     def process_reward(self, reward, info):
-        if DEBUG:
+        if self.show_rewards:
             reward_history = [(reward, None)]
         if MODIFY_REWARDS and reward in MODIFY_REWARDS:
             reward = MODIFY_REWARDS[reward]
-            if DEBUG:
+            if self.show_rewards:
                 reward_history.append((reward, "modified"))
         if REWARD_OFFSET:
             reward -= REWARD_OFFSET
-            if DEBUG:
+            if self.show_rewards:
                 reward_history.append((reward, "offset"))
         if info["observation"] is not None:
 
@@ -142,7 +146,7 @@ class MinecraftProcessor(Processor):
                     pos for coord, pos in reward_coords.items() |> sorted
                 ])
                 reward += metric(x, y)
-                if DEBUG:
+                if self.show_rewards:
                     reward_history.append((reward, "position {}".format({
                         coord: x[i] for i, coord in reward_coords |> sorted |> enumerate
                     })))
@@ -157,13 +161,13 @@ class MinecraftProcessor(Processor):
                     |> math.degrees
                 )
                 reward += metric(yaw, desired_yaw)
-                if DEBUG:
+                if self.show_rewards:
                     reward_history.append((reward, "got angle {}; desired angle {}".format(yaw, desired_yaw)))
 
-        if DEBUG and (
+        if self.always_show_rewards or self.show_rewards and (
             self.counter % DEBUG_LOG_INTERVAL == 0
             or any(abs(r) > 1 for r, why in reward_history)
-        ) or self.always_show_rewards:
+        ):
             prev_reward = reward_history[0][0]
             reward_str = "\nreward: {}".format(prev_reward)
             for i in range(1, len(reward_history)):

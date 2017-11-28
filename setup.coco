@@ -16,6 +16,7 @@ REQUIREMENTS = [
     "pygame",
     "scipy",
     "quiver_engine",
+    "progressbar2",
 ]
 
 # Setup:

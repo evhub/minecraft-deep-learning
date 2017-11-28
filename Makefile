@@ -1,3 +1,16 @@
+.PHONY: install
+install: build
+	pip install -e .
+
+.PHONY: build
+build: setup
+	coconut setup.coco --no-tco --strict
+	coconut "minecraft_deep_learning-source" minecraft_deep_learning --no-tco --strict --jobs sys
+
+.PHONY: setup
+setup:
+	pip install coconut-develop
+
 .PHONY: play
 play: install
 	python minecraft_deep_learning --mode play
@@ -14,19 +27,6 @@ test: install
 quiver: install
 	python minecraft_deep_learning --mode quiver
 
-.PHONY: install
-install: build
-	pip install -e .
-
-.PHONY: build
-build: setup
-	coconut setup.coco --no-tco --strict
-	coconut "minecraft_deep_learning-source" minecraft_deep_learning --no-tco --strict --jobs sys
-
-.PHONY: setup
-setup:
-	pip install coconut-develop
-
 .PHONY: clean
 clean:
 	rm -rf ./dist ./build ./minecraft_deep_learning
@@ -36,12 +36,12 @@ clean:
 
 .PHONY: wipe
 wipe: clean
-	rm -rf ./saved_weights ./saved_logs ./saved_images
+	rm -rf ./saved_weights ./saved_data ./saved_images
 
 .PHONY: tensorboard
 tensorboard:
 	open http://localhost:6006
-	tensorboard --logdir=./saved_logs
+	tensorboard --logdir=./saved_data
 
 .PHONY: watch
 watch:

@@ -1,0 +1,84 @@
+# Imports:
+import json
+import codecs
+import os.path
+from io import BytesIO
+
+import numpy as np
+from progressbar import ProgressBar
+
+# Memory handling:
+def save_memory(memory, filename):
+    """Save the given replay memory to the given filename."""
+    serialized_memory = []
+    for obs, action, reward, done in memory:
+        binary_file = BytesIO()
+        obs |> np.save$(binary_file)
+        binary_file.seek(0)
+        serialized_obs = (
+            binary_file.read()
+            |> codecs.encode$(?, "base64")
+            |> .decode("ascii")
+        )
+        serialized_memory.append((
+            serialized_obs,
+            action,
+            reward,
+            done,
+        ))
+    with open(filename, "w") as memory_file:
+        json.dump(serialized_memory, memory_file)
+
+def load_memory(filename):
+    """Load replay memory from the given filename."""
+    memory = []
+    if os.path.exists(filename):
+        with open(filename, "r") as memory_file:
+            serialized_memory = json.load(memory_file)
+        for serialized_obs, action, reward, done in serialized_memory:
+            binary_file = (
+                serialized_obs
+                |> .encode("ascii")
+                |> codecs.decode$(?, "base64")
+                |> BytesIO
+            )
+            obs = np.load(binary_file)
+            memory.append((
+                obs,
+                action,
+                reward,
+                done,
+            ))
+    print("Loaded {} observations into memory.".format(len(memory)))
+    return memory
+
+def add_memory(agent, memory):
+    """Add the given replay memory to the given agent."""
+    original_memory_size = agent.memory.nb_entries
+    for obs, action, reward, done in memory:
+        agent.memory.append(obs, action, reward, done, training=True)
+    assert agent.memory.nb_entries == original_memory_size + len(memory), (agent.memory_nb_entries, original_memory_size, len(memory))
+
+def train_on_memory(agent, iterations):
+    """Train the agent for the given iterations on its existing replay memory."""
+    print("Training on existing memory for {} iterations...".format(iterations))
+    assert agent.memory.nb_entries > 0, "no existing memory found; run make play to generate some"
+    training, agent.training = agent.training, True
+    memory_interval, agent.memory_interval = agent.memory_interval, float("inf")
+    nb_steps_warmup, agent.nb_steps_warmup = agent.nb_steps_warmup, 0
+    train_interval, agent.train_interval = agent.train_interval, 1
+    original_step = agent.step
+    try:
+        for step in ProgressBar()(range(1, iterations+1)):
+            agent.step = step
+            assert agent.step % agent.memory_interval != 0, (agent.step, agent.memory_interval)
+            assert agent.training, agent.training
+            assert agent.step > agent.nb_steps_warmup, (agent.step, agent.nb_steps_warmup)
+            assert agent.step % agent.train_interval == 0, (agent.step, agent.train_interval)
+            agent.backward(None, None)
+    finally:
+        agent.training = training
+        agent.memory_interval = memory_interval
+        agent.nb_steps_warmup = nb_steps_warmup
+        agent.train_interval = train_interval
+        agent.step = original_step

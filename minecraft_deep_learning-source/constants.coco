@@ -38,17 +38,15 @@ def angle_reward_closer(x, y, scale=1) =
 
 # Environment constants:
 ENV_NAME = "MinecraftDefaultFlat1-v0"
+RESET_WORLD = True
 IMAGE_SIZE = (288, 384)  # (height, width)
 OBSERVE_DEPTH = False
 CONTINUOUS_ACTIONS = True
 DISCRETE_ACTIONS = False
 KEYMAP = {
     pygame.K_w: "move 1",
-    pygame.K_s: "move -1",
     pygame.K_d: "turn 1",
     pygame.K_a: "turn -1",
-    pygame.K_e: "strafe 1",
-    pygame.K_q: "strafe -1",
 }
 USE_ACTIONS = KEYMAP.values() |> sorted |> list
 MODIFY_REWARDS = {
@@ -56,11 +54,11 @@ MODIFY_REWARDS = {
 }
 REWARD_POSITION = (
     {"x": 19.5, "z": 19.5},
-    gaussian_reward_closer$(scale=1.75, sigma=18, L=1),
+    gaussian_reward_closer$(scale=0.875, sigma=18, L=1),
 )
 REWARD_ANGLE = (
     19.5, 19.5,  # x, z
-    angle_reward_closer$(scale=0.25),
+    angle_reward_closer$(scale=0.125),
 )
 REWARD_OFFSET = (
     REWARD_ANGLE[-1](0, 90)
@@ -97,19 +95,21 @@ INPUT_SIZE = (
 )
 
 # Training constants:
+MEMORY_STEPS = 100*SCALE
 NUM_STEPS = 1000*SCALE
-WARMUP_STEPS = 5*SCALE
+WARMUP_STEPS = 0
 RANDOM_START_STEPS = int(math.log10(SCALE))
 TARGET_UPDATE_PERIOD = SCALE
 SOFT_UPDATE_TARGET = False
-BGE_C = 0.5*math.sqrt(len(USE_ACTIONS)*math.log(NUM_STEPS))
 
+BGE_C = REWARD_OFFSET*math.sqrt(len(USE_ACTIONS)*math.log(NUM_STEPS - WARMUP_STEPS))
 TARGET_UPDATE = (
     1/TARGET_UPDATE_PERIOD if SOFT_UPDATE_TARGET
     else TARGET_UPDATE_PERIOD
 )
 ESTIMATED_TIME = "{} mins".format(
-    (0.05*NUM_STEPS)/60
+    0.03*MEMORY_STEPS + 0.05*NUM_STEPS
+    |> -> _/60
     |> math.ceil
     |> int
 )
@@ -118,7 +118,7 @@ ESTIMATED_TIME = "{} mins".format(
 LOG_INTERVAL = NUM_STEPS//20
 DEBUG_LOG_INTERVAL = LOG_INTERVAL//10
 TESTING_EPISODES = 10
-TESTING_TAU = BGE_C/math.sqrt(NUM_STEPS/len(USE_ACTIONS))
+TESTING_TAU = BGE_C/math.sqrt((NUM_STEPS - WARMUP_STEPS)/len(USE_ACTIONS))
 
 BASE_DIR = (
     __file__
@@ -126,8 +126,8 @@ BASE_DIR = (
     |> os.path.dirname
 )
 WEIGHTS_DIR = os.path.join(BASE_DIR, "saved_weights")
-LOGS_DIR = os.path.join(BASE_DIR, "saved_logs")
+DATA_DIR = os.path.join(BASE_DIR, "saved_data")
 IMAGES_DIR = os.path.join(BASE_DIR, "saved_images")
-for need_dir in (WEIGHTS_DIR, LOGS_DIR, IMAGES_DIR):
+for need_dir in (WEIGHTS_DIR, DATA_DIR, IMAGES_DIR):
     if not os.path.exists(need_dir):
         os.mkdir(need_dir)

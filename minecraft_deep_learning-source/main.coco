@@ -3,15 +3,21 @@ import os.path
 import argparse
 import shutil
 
-import tensorflow as tf
 from quiver_engine import server
-from keras.models import Sequential
-from keras.layers import Lambda
 
 from minecraft_deep_learning.environment import build_environment
-from minecraft_deep_learning.model import build_agent
 from minecraft_deep_learning.processor import MinecraftProcessor
 from minecraft_deep_learning.callbacks import use_callbacks
+from minecraft_deep_learning.memory import (
+    save_memory,
+    load_memory,
+    add_memory,
+    train_on_memory,
+)
+from minecraft_deep_learning.model import (
+    build_agent,
+    build_image_model,
+)
 from minecraft_deep_learning.display import (
     close_display,
     get_pressed_action,
@@ -25,14 +31,14 @@ from minecraft_deep_learning.constants import (
     RANDOM_START_STEPS,
     USE_ACTIONS,
     IMAGES_DIR,
-    INPUT_SIZE,
-    CHANNELS,
-    WINDOW_SIZE,
     BASE_DIR,
+    DATA_DIR,
+    MEMORY_STEPS,
 )
 
 # Argument parser:
 final_weights_file = os.path.join(WEIGHTS_DIR, "weights_final.h5f")
+memory_file = os.path.join(DATA_DIR, "play_memory.json")
 
 arguments = argparse.ArgumentParser()
 arguments.add_argument(
@@ -45,6 +51,11 @@ arguments.add_argument(
     type=str,
     default=final_weights_file,
 )
+arguments.add_argument(
+    "--memory",
+    type=str,
+    default=memory_file,
+)
 
 # Argument handling:
 def run(args):
@@ -52,28 +63,39 @@ def run(args):
     env = None
     try:
         if args.mode == "play":
-            env = build_environment()
             proc = MinecraftProcessor(always_show_rewards=True)
             proc.use_display()
-            proc._action = env.action_space.sample()
-            def proc.handle_events():
-                action_name = None
-                while action_name is None:
-                    action_name = get_pressed_action()
-                proc._action = env.action_names[0].index(action_name)
+            proc.handle_events = -> _
+            memory = load_memory(args.memory)
+            env = build_environment()
+            last_obs = None
             done = True
-            while True:
-                if done:
-                    env.reset()
-                obs, reward, done, info = (
-                    proc._action
-                    |> env.step
-                    |*> proc.process_step
-                )
+            try:
+                while True:
+                    if done:
+                        env.reset()
+                    action_name = None
+                    while action_name is None:
+                        action_name = get_pressed_action()
+                    action = USE_ACTIONS.index(action_name)
+                    obs, reward, done, info = (
+                        action
+                        |> env.step
+                        |*> proc.process_step
+                    )
+                    if last_obs is not None:
+                        memory.append((last_obs, action, reward, done))
+                    last_obs = obs
+            finally:
+                save_memory(memory, args.memory)
 
         elif args.mode == "train":
-            agent, env = build_agent(), build_environment()
+            agent = build_agent()
+            add_memory(agent, load_memory(args.memory))
             print("Estimated training time: {}".format(ESTIMATED_TIME))
+            if MEMORY_STEPS:
+                train_on_memory(agent, MEMORY_STEPS)
+            env = build_environment()
             agent.fit(
                 env,
                 callbacks=use_callbacks,
@@ -81,11 +103,12 @@ def run(args):
                 nb_max_start_steps=RANDOM_START_STEPS,
                 log_interval=LOG_INTERVAL,
             )
-            agent.save_weights(final_weights_file, overwrite=True)
+            agent.save_weights(args.weights, overwrite=True)
 
         elif args.mode == "test":
-            agent, env = build_agent(), build_environment()
+            agent = build_agent()
             agent.load_weights(args.weights)
+            env = build_environment()
             agent.test(
                 env,
                 nb_episodes=TESTING_EPISODES,
@@ -96,21 +119,7 @@ def run(args):
         elif args.mode == "quiver":
             agent = build_agent()
             agent.load_weights(args.weights)
-            quiver_model = Sequential([
-                Lambda(tensor ->
-                    tensor/255.0
-                    |> tensor -> [tensor]*WINDOW_SIZE
-                    |> tf.stack
-                    |> tf.transpose$(perm=[1, 0, 4, 2, 3])
-                    |> tf.reshape$(shape=(-1, CHANNELS * WINDOW_SIZE) + INPUT_SIZE),
-                    input_shape=INPUT_SIZE + (CHANNELS,)
-                ),
-            ] + [
-                (def layer ->
-                    layer.inbound_nodes = [];
-                    layer)(layer)
-                for layer in agent.model.layers
-            ])
+            quiver_model = build_image_model(agent)
             temp_dir = os.path.join(BASE_DIR, "tmp")
             p_dir = os.path.join(BASE_DIR, "-p")
             try:

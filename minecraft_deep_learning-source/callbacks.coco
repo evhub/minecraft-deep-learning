@@ -13,7 +13,7 @@ from minecraft_deep_learning.constants import (
     LOG_INTERVAL,
     DEBUG,
     USE_ACTIONS,
-    LOGS_DIR,
+    DATA_DIR,
     WEIGHTS_DIR,
 )
 
@@ -40,7 +40,7 @@ use_callbacks = [
         interval=LOG_INTERVAL,
     ),
     FileLogger(
-        os.path.join(LOGS_DIR, "log.json"),
+        os.path.join(DATA_DIR, "log.json"),
         interval=DEBUG_LOG_INTERVAL,
     ),
 ] + ([
@@ -48,7 +48,7 @@ use_callbacks = [
         interval=DEBUG_LOG_INTERVAL,
     ),
     TensorBoardRL(
-        log_dir=LOGS_DIR,
+        log_dir=DATA_DIR,
         write_images=True,
     ),
 ] if DEBUG else [])

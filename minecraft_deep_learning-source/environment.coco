@@ -8,6 +8,7 @@ from minecraft_deep_learning.constants import (
     OBSERVE_DEPTH,
     DISCRETE_ACTIONS,
     CONTINUOUS_ACTIONS,
+    RESET_WORLD,
 )
 
 # Environment setup:
@@ -16,12 +17,13 @@ def build_environment():
     env = gym.make(ENV_NAME)
     env.init(
         start_minecraft=True,
+        forceWorldReset=RESET_WORLD,
         allowDiscreteMovement=DISCRETE_ACTIONS,
         allowContinuousMovement=CONTINUOUS_ACTIONS,
+        add_noop_command=True,
         # gym-minecraft uses (width, height) not (height, width)
         videoResolution=IMAGE_SIZE |> reversed |> tuple if IMAGE_SIZE is not None else None,
         videoWithDepth=OBSERVE_DEPTH,
-        add_noop_command=True,
     )
     assert isinstance(env.action_space, gym.spaces.Discrete), env.action_space
     assert len(env.action_names) == 1 and len(env.action_spaces) == 1, (env.action_names, env.action_spaces)

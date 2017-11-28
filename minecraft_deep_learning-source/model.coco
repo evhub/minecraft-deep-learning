@@ -1,14 +1,16 @@
 # Imports:
 from pprint import pprint
 
+import tensorflow as tf
 from keras.models import Sequential
 from keras.backend import image_data_format
-from keras.optimizers import Nadam
+from keras.optimizers import Adam
 from keras.layers import (
     Dense,
     Flatten,
     Conv2D,
     Permute,
+    Lambda,
 )
 from rl.agents.dqn import DQNAgent
 from rl.memory import SequentialMemory
@@ -97,7 +99,25 @@ def build_agent():
         enable_dueling_network=DUELING,
     )
     agent.compile(
-        optimizer=Nadam(),
+        optimizer=Adam(),
         metrics=["mae", "mse"],
     )
     return agent
+
+def build_image_model(agent):
+    """Construct a version of the model from agent that accepts raw images."""
+    Sequential([
+        Lambda(tensor ->
+            tensor/255.0
+            |> tensor -> [tensor]*WINDOW_SIZE
+            |> tf.stack
+            |> tf.transpose$(perm=[1, 0, 4, 2, 3])
+            |> tf.reshape$(shape=(-1, CHANNELS * WINDOW_SIZE) + INPUT_SIZE),
+            input_shape=INPUT_SIZE + (CHANNELS,)
+        ),
+    ] + [
+        (def layer ->
+            layer.inbound_nodes = [];
+            layer)(layer)
+        for layer in agent.model.layers
+    ])
