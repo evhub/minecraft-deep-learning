@@ -1,0 +1,38 @@
+# Imports:
+from pprint import pprint
+
+from rl.policy import (
+    BoltzmannGumbelQPolicy,
+    BoltzmannQPolicy,
+)
+
+from minecraft_deep_learning.constants import (
+    BGE_C,
+    LOG_INTERVAL,
+    TESTING_TAU,
+    DEBUG,
+)
+
+# Policy setup:
+def build_policies():
+    """Create training and testing exploration policies."""
+    policy = BoltzmannGumbelQPolicy(C=BGE_C)
+
+    test_policy = BoltzmannQPolicy(tau=TESTING_TAU)
+
+    print("BGE beta annealing plan: {} -> {}".format(BGE_C, TESTING_TAU))
+    if DEBUG:
+        policy._counter = 0
+        old_select_action = policy.select_action
+        def policy.select_action(q_values):
+            action = old_select_action(q_values)
+            if policy._counter % LOG_INTERVAL == 0:
+                print()
+                pprint({
+                    USE_ACTIONS[action_index]: action_count
+                    for action_index, action_count in enumerate(policy.action_counts)
+                })
+            policy._counter += 1
+            return action
+
+    return policy, test_policy
