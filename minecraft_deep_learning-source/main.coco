@@ -64,8 +64,7 @@ def run(args):
     env = None
     try:
         if args.mode == "play":
-            proc = MinecraftProcessor(always_show_rewards=True)
-            proc.use_display()
+            proc = MinecraftProcessor(use_display=True, always_show_rewards=True)
             proc.handle_events = -> _
             memory = load_memory(args.memory)
             env = build_environment()
@@ -74,6 +73,7 @@ def run(args):
             try:
                 while True:
                     if done:
+                        print("observations in memory: {}".format(len(memory)))
                         env.reset()
                     action_name = None
                     while action_name is None:
@@ -122,7 +122,7 @@ def run(args):
             )
 
         elif args.mode == "quiver":
-            agent = build_agent()
+            agent = build_agent(use_display=False)
             agent.load_weights(args.weights)
             quiver_model = build_image_model(agent)
             temp_dir = os.path.join(BASE_DIR, "tmp")

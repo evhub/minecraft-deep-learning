@@ -116,3 +116,7 @@ saved_images/
 # FFMPEG
 ffmpeg.out
 frame_info.txt
+
+# Saved weights
+saved_weights/
+!weights_final.*

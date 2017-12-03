@@ -23,10 +23,6 @@ train: install
 test: install
 	python minecraft_deep_learning --mode test
 
-.PHONY: quiver
-quiver: install
-	python minecraft_deep_learning --mode quiver
-
 .PHONY: clean
 clean:
 	rm -rf ./dist ./build ./minecraft_deep_learning
@@ -38,11 +34,15 @@ clean:
 wipe: clean
 	rm -rf ./saved_weights ./saved_data ./saved_images
 
+.PHONY: watch
+watch:
+	coconut "minecraft_deep_learning-source" minecraft_deep_learning --watch --no-tco --strict
+
+.PHONY: quiver
+quiver: install
+	python minecraft_deep_learning --mode quiver
+
 .PHONY: tensorboard
 tensorboard:
 	open http://localhost:6006
 	tensorboard --logdir=./saved_data
-
-.PHONY: watch
-watch:
-	coconut "minecraft_deep_learning-source" minecraft_deep_learning --watch --no-tco --strict

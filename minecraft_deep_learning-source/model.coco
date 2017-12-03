@@ -10,8 +10,8 @@ from keras.layers import (
     Permute,
     Lambda,
 )
-from rl.agents.dqn import DQNAgent
 from rl.memory import SequentialMemory
+from rl.agents.dqn import DQNAgent
 
 from minecraft_deep_learning.processor import MinecraftProcessor
 from minecraft_deep_learning.policy import build_policies
@@ -27,10 +27,12 @@ from minecraft_deep_learning.constants import (
     DOUBLE_DQN,
     TARGET_UPDATE,
     USE_ACTIONS,
+    CONV_ACTIVATION,
+    DENSE_ACTIVATION,
 )
 
 # Model setup:
-def build_agent():
+def build_agent(use_display=None):
     """Build an agent for the given environment."""
     num_actions = len(USE_ACTIONS)
 
@@ -41,15 +43,15 @@ def build_agent():
             input_shape=(CHANNELS * WINDOW_SIZE,) + INPUT_SIZE,
         ),
     ] + [
-        Conv2D(filters, size, strides=strides, activation="relu")
+        Conv2D(filters, size, strides=strides, activation=CONV_ACTIVATION)
         for filters, size, strides in CONV_LAYERS
     ] + [
         Flatten(),
     ] + [
-        Dense(neurons, activation="relu")
+        Dense(neurons, activation=DENSE_ACTIVATION)
         for neurons in DENSE_LAYERS
     ] + [
-        Dense(num_actions),
+        Dense(len(USE_ACTIONS)),
     ])
 
     memory = SequentialMemory(
@@ -57,13 +59,13 @@ def build_agent():
         window_length=WINDOW_SIZE,
     )
 
-    processor = MinecraftProcessor()
+    processor = MinecraftProcessor(use_display=use_display)
 
     policy, test_policy = build_policies()
 
     agent = DQNAgent(
         model=model,
-        nb_actions=num_actions,
+        nb_actions=len(USE_ACTIONS),
         policy=policy,
         test_policy=test_policy,
         memory=memory,
@@ -80,13 +82,14 @@ def build_agent():
     )
     return agent
 
-def build_image_model(agent):
+def build_image_model(agent) =
     """Construct a version of the model from agent that accepts raw images."""
     Sequential([
         Lambda(tensor ->
             tensor/255.0
             |> tensor -> [tensor]*WINDOW_SIZE
             |> tf.stack
+            # convert (window, batch, height, width, channels) to (batch, window, channels, height, width)
             |> tf.transpose$(perm=[1, 0, 4, 2, 3])
             |> tf.reshape$(shape=(-1, CHANNELS * WINDOW_SIZE) + INPUT_SIZE),
             input_shape=INPUT_SIZE + (CHANNELS,)

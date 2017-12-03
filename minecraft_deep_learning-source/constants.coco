@@ -6,8 +6,8 @@ import numpy as np
 import pygame
 
 # Global constants:
-DEBUG = True
-SCALE = 1000 if not DEBUG else 10
+DEBUG = False
+SCALE = 1000
 
 # Metrics:
 def reward_farther(x, y, scale=1, L=None) =
@@ -38,7 +38,7 @@ def angle_reward_closer(x, y, scale=1) =
 
 # Environment constants:
 ENV_NAME = "MinecraftDefaultFlat1-v0"
-RESET_WORLD = False
+RESET_WORLD = True
 IMAGE_SIZE = (288, 384)  # (height, width)
 OBSERVE_DEPTH = False
 CONTINUOUS_ACTIONS = True
@@ -54,12 +54,13 @@ MODIFY_REWARDS = {
 }
 REWARD_POSITION = (
     {"x": 19.5, "z": 19.5},
-    gaussian_reward_closer$(scale=0.875, sigma=18, L=1),
+    gaussian_reward_closer$(scale=0.9, sigma=18, L=1),
 )
 REWARD_ANGLE = (
     19.5, 19.5,  # x, z
-    angle_reward_closer$(scale=0.125),
+    angle_reward_closer$(scale=0.1),
 )
+
 REWARD_OFFSET = (
     REWARD_ANGLE[-1](0, 90)
     + REWARD_POSITION[-1](
@@ -79,9 +80,11 @@ CONV_LAYERS = (
     (64, (4, 4), (2, 2)),
     (64, (3, 3), (1, 1)),
 )
+CONV_ACTIVATION = "elu"
 DENSE_LAYERS = (
     512,
 )
+DENSE_ACTIVATION = "elu"
 MEMORY_SIZE = 400*SCALE
 DOUBLE_DQN = True
 DUELING = True
@@ -98,13 +101,11 @@ INPUT_SIZE = (
 NUM_STEPS = 1000*SCALE
 MEMORY_STEPS = 100*SCALE
 WARMUP_STEPS = 0
-RANDOM_START_STEPS = int(math.log10(SCALE))
+RANDOM_START_STEPS = 5
 TARGET_UPDATE_PERIOD = SCALE
 SOFT_UPDATE_TARGET = False
+BOLTZMANN_TAU = 0.075
 
-BGE_C = 2*REWARD_OFFSET*math.sqrt(len(USE_ACTIONS)*math.log(NUM_STEPS - WARMUP_STEPS))
-if MEMORY_STEPS:
-    BGE_C /= math.log10(MEMORY_STEPS)
 TARGET_UPDATE = (
     1/TARGET_UPDATE_PERIOD if SOFT_UPDATE_TARGET
     else TARGET_UPDATE_PERIOD
@@ -121,7 +122,6 @@ LOG_INTERVAL = NUM_STEPS//20
 DEBUG_LOG_INTERVAL = LOG_INTERVAL//10
 TESTING_EPISODES = 10
 
-TESTING_TAU = REWARD_OFFSET
 BASE_DIR = (
     __file__
     |> os.path.dirname

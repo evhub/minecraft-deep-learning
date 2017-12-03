@@ -1,44 +1,35 @@
 # Imports:
-import math
-from pprint import pprint
-
-from rl.policy import (
-    BoltzmannGumbelQPolicy,
-    BoltzmannQPolicy,
-)
+import numpy as np
+from rl.policy import BoltzmannQPolicy
 
 from minecraft_deep_learning.constants import (
-    BGE_C,
     LOG_INTERVAL,
-    TESTING_TAU,
     DEBUG,
-    NUM_STEPS,
-    WARMUP_STEPS,
-    USE_ACTIONS,
+    BOLTZMANN_TAU,
 )
 
 # Policy setup:
 def build_policies():
-    """Create training and testing exploration policies."""
-    policy = BoltzmannGumbelQPolicy(C=BGE_C)
-
-    test_policy = BoltzmannQPolicy(tau=TESTING_TAU)
-
-    BGE_BETA_FINAL = BGE_C/math.sqrt((NUM_STEPS - WARMUP_STEPS)/len(USE_ACTIONS))
-    print("BGE beta annealing plan: {} -> {}".format(BGE_C, BGE_BETA_FINAL))
+    """Build the training and test exploration policies."""
+    print("Using Boltzmann exploration with tau = {}".format(BOLTZMANN_TAU))
+    policy = BoltzmannQPolicy(tau=BOLTZMANN_TAU)
 
     if DEBUG:
         policy._counter = 0
+        policy._greedy_counter = 0
         old_select_action = policy.select_action
         def policy.select_action(q_values):
+            if policy._counter and policy._counter % LOG_INTERVAL == 0:
+                print("\neffective epsilon: {} ({}/{})".format(
+                    1 - policy._greedy_counter/policy._counter,
+                    policy._counter - policy._greedy_counter,
+                    policy._counter,
+                ))
+            best_action = np.argmax(q_values)
             action = old_select_action(q_values)
-            if policy._counter % LOG_INTERVAL == 0:
-                print()
-                pprint({
-                    USE_ACTIONS[action_index]: action_count
-                    for action_index, action_count in enumerate(policy.action_counts)
-                })
+            if action == best_action:
+                policy._greedy_counter += 1
             policy._counter += 1
             return action
 
-    return policy, test_policy
+    return policy, policy  # train and test policies are identical

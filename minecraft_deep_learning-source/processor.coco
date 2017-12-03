@@ -36,11 +36,11 @@ class MinecraftProcessor(Processor):
     """Convert gym_minecraft output into a form understood by keras-rl."""
     handle_events = staticmethod(pump_events)
 
-    def __init__(self, always_show_rewards=False):
+    def __init__(self, use_display=None, always_show_rewards=False):
         super(MinecraftProcessor, self).__init__()
         self.screen = None
         self.always_show_rewards = always_show_rewards
-        if DEBUG:
+        if use_display ?? DEBUG:
             self.counter = -1
             self.use_display()
 
