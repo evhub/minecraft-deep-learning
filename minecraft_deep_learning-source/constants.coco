@@ -38,7 +38,7 @@ def angle_reward_closer(x, y, scale=1) =
 
 # Environment constants:
 ENV_NAME = "MinecraftDefaultFlat1-v0"
-RESET_WORLD = True
+RESET_WORLD = False
 IMAGE_SIZE = (288, 384)  # (height, width)
 OBSERVE_DEPTH = False
 CONTINUOUS_ACTIONS = True
@@ -54,19 +54,18 @@ MODIFY_REWARDS = {
 }
 REWARD_POSITION = (
     {"x": 19.5, "z": 19.5},
-    gaussian_reward_closer$(scale=0.9, sigma=18, L=1),
+    gaussian_reward_closer$(scale=1, sigma=18, L=1),
 )
 REWARD_ANGLE = (
-    19.5, 19.5,  # x, z
-    angle_reward_closer$(scale=0.1),
+    # 19.5, 19.5,  # x, z
+    # angle_reward_closer$(scale=0.1),
 )
-
 REWARD_OFFSET = (
-    REWARD_ANGLE[-1](0, 90)
-    + REWARD_POSITION[-1](
+    REWARD_POSITION[-1](
         np.array([0.5, 0.5]),
         np.array([19.5, 19.5]),
     )
+    # + REWARD_ANGLE[-1](0, 90)
 )
 
 # Model constants:
@@ -102,9 +101,9 @@ NUM_STEPS = 1000*SCALE
 MEMORY_STEPS = 100*SCALE
 WARMUP_STEPS = 0
 RANDOM_START_STEPS = 5
+BOLTZMANN_TAU = 0.1
 TARGET_UPDATE_PERIOD = SCALE
 SOFT_UPDATE_TARGET = False
-BOLTZMANN_TAU = 0.075
 
 TARGET_UPDATE = (
     1/TARGET_UPDATE_PERIOD if SOFT_UPDATE_TARGET

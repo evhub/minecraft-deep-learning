@@ -154,12 +154,14 @@ class MinecraftProcessor(Processor):
             if REWARD_ANGLE:
                 desired_x, desired_z, metric = REWARD_ANGLE
                 x, z, yaw = ("XPos", "ZPos", "Yaw") |> map$(info["observation"][])
-                if yaw < 0:  # force positive yaw
-                    yaw += 360
                 desired_yaw = (
-                    math.atan2(x - desired_x, z - desired_z) + math.pi  # force positive desired_yaw
+                    # calculate desired_yaw to match with yaw
+                    math.atan2(x - desired_x, z - desired_z) + math.pi/2
                     |> math.degrees
                 )
+                # force positive yaw and desired yaw
+                yaw %= 360
+                desired_yaw %= 360
                 reward += metric(yaw, desired_yaw)
                 if self.show_rewards:
                     reward_history.append((reward, "got angle {}; desired angle {}".format(yaw, desired_yaw)))
@@ -169,7 +171,7 @@ class MinecraftProcessor(Processor):
             or any(abs(r) > 1 for r, why in reward_history)
         ):
             prev_reward = reward_history[0][0]
-            reward_str = "\nreward: {}".format(prev_reward)
+            reward_str = "reward: {}".format(prev_reward)
             for i in range(1, len(reward_history)):
                 reward_i, reason = reward_history[i]
                 reward_diff = reward_i - prev_reward
@@ -179,5 +181,5 @@ class MinecraftProcessor(Processor):
                     reward_str += "\t- {}".format(-reward_diff)
                 reward_str += " ({})".format(reason)
                 prev_reward = reward_i
-            print("{}\t= {}".format(reward_str, reward))
+            print("\n{}\n\t= {}".format(reward_str, reward))
         return reward

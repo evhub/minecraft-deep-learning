@@ -57,7 +57,7 @@ def add_memory(agent, memory):
     original_memory_size = agent.memory.nb_entries
     for obs, action, reward, done in memory:
         agent.memory.append(obs, action, reward, done, training=True)
-    assert agent.memory.nb_entries == original_memory_size + len(memory), (agent.memory_nb_entries, original_memory_size, len(memory))
+    assert original_memory_size < agent.memory.nb_entries <= original_memory_size + len(memory), (agent.memory.nb_entries, original_memory_size, len(memory))
 
 def train_on_memory(agent, iterations):
     """Train the agent for the given iterations on its existing replay memory."""
