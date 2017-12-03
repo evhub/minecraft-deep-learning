@@ -115,7 +115,7 @@ saved_images/
 
 # Saved weights
 saved_weights/
-!weights_final.*
+!weights_final.h5f
 
 # FFMPEG
 ffmpeg.out

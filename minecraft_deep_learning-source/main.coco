@@ -2,7 +2,6 @@
 import os.path
 import argparse
 import shutil
-import traceback
 
 from quiver_engine import server
 
@@ -92,10 +91,11 @@ def run(args):
 
         elif args.mode == "train":
             agent = build_agent()
-            try:
+            if os.path.exists(args.weights):
                 agent.load_weights(args.weights)
-            except Exception:
-                traceback.print_exc()
+                print("Loaded weights from {!r}".format(args.weights))
+            else:
+                print("\nFailed to load weights from {!r}\n".format(args.weights))
             add_memory(agent, load_memory(args.memory))
             print("Estimated training time: {}".format(ESTIMATED_TIME))
             if MEMORY_STEPS:

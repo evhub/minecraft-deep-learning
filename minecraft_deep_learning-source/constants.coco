@@ -7,7 +7,7 @@ import pygame
 
 # Global constants:
 DEBUG = False
-SCALE = 1000
+SCALE = 100
 
 # Metrics:
 def reward_farther(x, y, scale=1, L=None) =
@@ -20,7 +20,7 @@ def reward_closer(x, y, scale=1, L=None) =
 
 def gaussian_reward_closer(x, y, scale=1, sigma=1, L=None) =
     """Compute 1 - the distance between x and y using the given Gaussian."""
-    scale * np.exp(reward_closer(x, y, scale=0.5/sigma, L=L))
+    scale * np.exp(-reward_closer(x, y, L=L)**2/(2*sigma**2))
 
 def gaussian_reward_farther(x, y, scale=1, sigma=1, L=None) =
     """Compute the distance between x and y using the given Gaussian."""
@@ -54,18 +54,18 @@ MODIFY_REWARDS = {
 }
 REWARD_POSITION = (
     {"x": 19.5, "z": 19.5},
-    gaussian_reward_closer$(scale=1, sigma=18, L=1),
+    gaussian_reward_closer$(scale=0.75, sigma=13),
 )
 REWARD_ANGLE = (
-    # 19.5, 19.5,  # x, z
-    # angle_reward_closer$(scale=0.1),
+    19.5, 19.5,  # x, z
+    angle_reward_closer$(scale=0.25),
 )
 REWARD_OFFSET = (
     REWARD_POSITION[-1](
         np.array([0.5, 0.5]),
         np.array([19.5, 19.5]),
     )
-    # + REWARD_ANGLE[-1](0, 90)
+    + REWARD_ANGLE[-1](0, 90)
 )
 
 # Model constants:
