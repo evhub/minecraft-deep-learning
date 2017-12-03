@@ -20,7 +20,6 @@ def build_environment():
         forceWorldReset=RESET_WORLD,
         allowDiscreteMovement=DISCRETE_ACTIONS,
         allowContinuousMovement=CONTINUOUS_ACTIONS,
-        add_noop_command=True,
         # gym-minecraft uses (width, height) not (height, width)
         videoResolution=IMAGE_SIZE |> reversed |> tuple if IMAGE_SIZE is not None else None,
         videoWithDepth=OBSERVE_DEPTH,

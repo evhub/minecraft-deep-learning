@@ -7,7 +7,7 @@ import pygame
 
 # Global constants:
 DEBUG = False
-SCALE = 100
+SCALE = 1000
 
 # Metrics:
 def reward_farther(x, y, scale=1, L=None) =
@@ -38,7 +38,7 @@ def angle_reward_closer(x, y, scale=1) =
 
 # Environment constants:
 ENV_NAME = "MinecraftDefaultFlat1-v0"
-RESET_WORLD = False
+RESET_WORLD = True
 IMAGE_SIZE = (288, 384)  # (height, width)
 OBSERVE_DEPTH = False
 CONTINUOUS_ACTIONS = True
@@ -49,7 +49,7 @@ KEYMAP = {
     pygame.K_a: "turn -1",
 }
 USE_ACTIONS = KEYMAP.values() |> sorted |> list
-MODIFY_REWARDS = {
+SET_REWARDS = {
     100: 1,
 }
 REWARD_POSITION = (
@@ -99,9 +99,9 @@ INPUT_SIZE = (
 # Training constants:
 NUM_STEPS = 1000*SCALE
 MEMORY_STEPS = 100*SCALE
-WARMUP_STEPS = 0
+BOLTZMANN_TAU = 0.0875
 RANDOM_START_STEPS = 5
-BOLTZMANN_TAU = 0.1
+WARMUP_STEPS = 0
 TARGET_UPDATE_PERIOD = SCALE
 SOFT_UPDATE_TARGET = False
 

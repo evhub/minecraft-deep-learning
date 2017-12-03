@@ -6,6 +6,7 @@ from minecraft_deep_learning.constants import (
     LOG_INTERVAL,
     DEBUG,
     BOLTZMANN_TAU,
+    USE_ACTIONS,
 )
 
 # Policy setup:
@@ -20,8 +21,8 @@ def build_policies():
         old_select_action = policy.select_action
         def policy.select_action(q_values):
             if policy._counter and policy._counter % LOG_INTERVAL == 0:
-                print("\neffective epsilon: {} ({}/{})".format(
-                    1 - policy._greedy_counter/policy._counter,
+                print("\neffective epsilon: {} (non-greedy {}/{} times)".format(
+                    (1 - policy._greedy_counter/policy._counter)/(len(USE_ACTIONS) - 1),
                     policy._counter - policy._greedy_counter,
                     policy._counter,
                 ))

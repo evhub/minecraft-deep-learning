@@ -19,7 +19,7 @@ from minecraft_deep_learning.constants import (
     DEBUG,
     LOG_INTERVAL,
     DEBUG_LOG_INTERVAL,
-    MODIFY_REWARDS,
+    SET_REWARDS,
     REWARD_POSITION,
     REWARD_ANGLE,
     REWARD_OFFSET,
@@ -124,47 +124,50 @@ class MinecraftProcessor(Processor):
         DEBUG or self.always_show_rewards
 
     def process_reward(self, reward, info):
-        if MODIFY_REWARDS and reward in MODIFY_REWARDS:
-            reward = MODIFY_REWARDS[reward]
         if self.show_rewards:
             reward_history = [(reward, None)]
 
-        if REWARD_OFFSET:
-            reward -= REWARD_OFFSET
+        if SET_REWARDS and reward in SET_REWARDS:
+            reward = SET_REWARDS[reward]
             if self.show_rewards:
-                reward_history.append((reward, "offset"))
+                reward_history.append((reward, "set"))
 
-        if info["observation"] is not None:
+        else:
 
-            if REWARD_POSITION:
-                reward_coords, metric = REWARD_POSITION
-                x = np.asarray([
-                    info["observation"][coord.upper() + "Pos"]
-                    for coord in reward_coords |> sorted
-                ])
-                y = np.asarray([
-                    pos for coord, pos in reward_coords.items() |> sorted
-                ])
-                reward += metric(x, y)
+            if REWARD_OFFSET:
+                reward -= REWARD_OFFSET
                 if self.show_rewards:
-                    reward_history.append((reward, "position {}".format({
-                        coord: x[i] for i, coord in reward_coords |> sorted |> enumerate
-                    })))
+                    reward_history.append((reward, "offset"))
 
-            if REWARD_ANGLE:
-                desired_x, desired_z, metric = REWARD_ANGLE
-                x, z, raw_yaw = ("XPos", "ZPos", "Yaw") |> map$(info["observation"][])
-                # calculate yaw and desired_yaw to match up
-                yaw = (raw_yaw + 90) % 360
-                desired_yaw = (
-                    math.atan2(z - desired_z, x - desired_x) + math.pi
-                    |> math.degrees
-                )
-                reward += metric(yaw, desired_yaw)
-                if self.show_rewards:
-                    reward_history.append((reward, "got angle {}; desired angle {}".format(yaw, desired_yaw)))
+            if info["observation"] is not None:
 
+                if REWARD_POSITION:
+                    reward_coords, metric = REWARD_POSITION
+                    x = np.asarray([
+                        info["observation"][coord.upper() + "Pos"]
+                        for coord in reward_coords |> sorted
+                    ])
+                    y = np.asarray([
+                        pos for coord, pos in reward_coords.items() |> sorted
+                    ])
+                    reward += metric(x, y)
+                    if self.show_rewards:
+                        reward_history.append((reward, "position {}".format({
+                            coord: x[i] for i, coord in reward_coords |> sorted |> enumerate
+                        })))
 
+                if REWARD_ANGLE:
+                    desired_x, desired_z, metric = REWARD_ANGLE
+                    x, z, raw_yaw = ("XPos", "ZPos", "Yaw") |> map$(info["observation"][])
+                    # calculate yaw and desired_yaw to match up
+                    yaw = (raw_yaw + 90) % 360
+                    desired_yaw = (
+                        math.atan2(z - desired_z, x - desired_x) + math.pi
+                        |> math.degrees
+                    )
+                    reward += metric(yaw, desired_yaw)
+                    if self.show_rewards:
+                        reward_history.append((reward, "got angle {}; desired angle {}".format(yaw, desired_yaw)))
 
         if self.always_show_rewards or self.show_rewards and (
             self.counter % DEBUG_LOG_INTERVAL == 0
