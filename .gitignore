@@ -109,7 +109,6 @@ ENV/
 # Compiled Coconut
 *.py
 
-# Saved data
-saved_weights/
+# Saved data and images
 saved_data/
 saved_images/
