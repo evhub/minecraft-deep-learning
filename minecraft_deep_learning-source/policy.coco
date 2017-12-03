@@ -1,4 +1,5 @@
 # Imports:
+import math
 from pprint import pprint
 
 from rl.policy import (
@@ -11,6 +12,9 @@ from minecraft_deep_learning.constants import (
     LOG_INTERVAL,
     TESTING_TAU,
     DEBUG,
+    NUM_STEPS,
+    WARMUP_STEPS,
+    USE_ACTIONS,
 )
 
 # Policy setup:
@@ -20,7 +24,9 @@ def build_policies():
 
     test_policy = BoltzmannQPolicy(tau=TESTING_TAU)
 
-    print("BGE beta annealing plan: {} -> {}".format(BGE_C, TESTING_TAU))
+    BGE_BETA_FINAL = BGE_C/math.sqrt((NUM_STEPS - WARMUP_STEPS)/len(USE_ACTIONS))
+    print("BGE beta annealing plan: {} -> {}".format(BGE_C, BGE_BETA_FINAL))
+
     if DEBUG:
         policy._counter = 0
         old_select_action = policy.select_action

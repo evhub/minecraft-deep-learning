@@ -6,7 +6,7 @@ import numpy as np
 import pygame
 
 # Global constants:
-DEBUG = False
+DEBUG = True
 SCALE = 1000 if not DEBUG else 10
 
 # Metrics:
@@ -38,7 +38,7 @@ def angle_reward_closer(x, y, scale=1) =
 
 # Environment constants:
 ENV_NAME = "MinecraftDefaultFlat1-v0"
-RESET_WORLD = True
+RESET_WORLD = False
 IMAGE_SIZE = (288, 384)  # (height, width)
 OBSERVE_DEPTH = False
 CONTINUOUS_ACTIONS = True
@@ -121,7 +121,7 @@ LOG_INTERVAL = NUM_STEPS//20
 DEBUG_LOG_INTERVAL = LOG_INTERVAL//10
 TESTING_EPISODES = 10
 
-TESTING_TAU = BGE_C/math.sqrt((NUM_STEPS - WARMUP_STEPS)/len(USE_ACTIONS))
+TESTING_TAU = REWARD_OFFSET
 BASE_DIR = (
     __file__
     |> os.path.dirname

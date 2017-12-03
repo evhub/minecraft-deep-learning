@@ -112,3 +112,7 @@ ENV/
 # Saved data and images
 saved_data/
 saved_images/
+
+# FFMPEG
+ffmpeg.out
+frame_info.txt
