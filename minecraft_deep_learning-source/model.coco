@@ -29,6 +29,7 @@ from minecraft_deep_learning.constants import (
     USE_ACTIONS,
     CONV_ACTIVATION,
     DENSE_ACTIVATION,
+    DISCOUNT_GAMMA,
 )
 
 # Model setup:
@@ -73,6 +74,7 @@ def build_agent(use_display=None):
         nb_steps_warmup=WARMUP_STEPS,
         target_model_update=TARGET_UPDATE,
         train_interval=WINDOW_SIZE,
+        gamma=DISCOUNT_GAMMA,
         enable_double_dqn=DOUBLE_DQN,
         enable_dueling_network=DUELING,
     )

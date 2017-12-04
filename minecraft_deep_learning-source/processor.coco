@@ -24,7 +24,7 @@ from minecraft_deep_learning.constants import (
     REWARD_ANGLE,
     IMAGES_DIR,
     INITIAL_REWARD,
-    REWARD_DELTA
+    DISCOUNT_GAMMA,
 )
 from minecraft_deep_learning.display import (
     create_screen,
@@ -41,7 +41,7 @@ class MinecraftProcessor(Processor):
         super(MinecraftProcessor, self).__init__()
         self.screen = None
         self.always_show_rewards = always_show_rewards
-        self.set_prev_reward()
+        self.set_prev_potential()
         if use_display ?? DEBUG:
             self.counter = -1
             self.use_display()
@@ -63,12 +63,12 @@ class MinecraftProcessor(Processor):
             self.process_info(info),
         )
         if done:
-            self.set_prev_reward()
+            self.set_prev_potential()
         return processed_step
 
-    def set_prev_reward(self, reward=INITIAL_REWARD):
+    def set_prev_potential(self, reward=INITIAL_REWARD):
         """Set the previous reward for computing reward deltas."""
-        self.prev_reward = reward
+        self.prev_potential = reward
 
     def process_observation(self, observation):
         assert IMAGE_SIZE is not None and observation.shape == IMAGE_SIZE + (3 + OBSERVE_DEPTH,), observation.shape
@@ -172,12 +172,11 @@ class MinecraftProcessor(Processor):
                 if self.show_rewards:
                     reward_history.append((reward, "got angle {}; desired angle {}".format(yaw, desired_yaw)))
 
-            base_reward = reward
-            reward -= self.prev_reward
-            if REWARD_DELTA:
-                self.set_prev_reward(base_reward)
+            new_potential = reward
+            reward = DISCOUNT_GAMMA*new_potential - self.prev_potential
+            self.set_prev_potential(new_potential)
             if self.show_rewards:
-                reward_history.append((reward, "{} from {}".format("delta" if REWARD_DELTA else "offset", base_reward)))
+                reward_history.append((reward, "reward shaping {}".format(new_potential)))
 
         if self.always_show_rewards or self.show_rewards and (
             self.counter % DEBUG_LOG_INTERVAL == 0
