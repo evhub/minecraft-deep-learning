@@ -7,7 +7,7 @@ import pygame
 
 # Global constants:
 DEBUG = False
-SCALE = 100
+SCALE = 1000
 
 # Metrics:
 def reward_farther(x, y, scale=1, L=None) =
@@ -99,8 +99,8 @@ INPUT_SIZE = (
 
 # Training constants:
 NUM_STEPS = 1000*SCALE
-MEMORY_STEPS = 100*SCALE
-BOLTZMANN_TAU = 0.05
+MEMORY_STEPS = 200*SCALE
+BOLTZMANN_TAU = 0.075
 RANDOM_START_STEPS = 5
 WARMUP_STEPS = 0
 TARGET_UPDATE_PERIOD = SCALE

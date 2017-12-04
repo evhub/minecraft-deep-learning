@@ -93,9 +93,9 @@ def run(args):
             agent = build_agent()
             if os.path.exists(args.weights):
                 agent.load_weights(args.weights)
-                print("Loaded weights from {!r}".format(args.weights))
+                print("Loaded weights from: {}".format(args.weights))
             else:
-                print("\nFailed to load weights from {!r}\n".format(args.weights))
+                print("\nFailed to load weights from: {}\n".format(args.weights))
             add_memory(agent, load_memory(args.memory))
             print("Estimated training time: {}".format(ESTIMATED_TIME))
             if MEMORY_STEPS:
