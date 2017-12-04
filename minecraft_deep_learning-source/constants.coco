@@ -7,7 +7,7 @@ import pygame
 
 # Global constants:
 DEBUG = False
-SCALE = 1000
+SCALE = 100
 
 # Metrics:
 def reward_farther(x, y, scale=1, L=None) =
@@ -38,7 +38,7 @@ def angle_reward_closer(x, y, scale=1) =
 
 # Environment constants:
 ENV_NAME = "MinecraftDefaultFlat1-v0"
-RESET_WORLD = True
+RESET_WORLD = False
 IMAGE_SIZE = (288, 384)  # (height, width)
 OBSERVE_DEPTH = False
 CONTINUOUS_ACTIONS = True
@@ -49,24 +49,25 @@ KEYMAP = {
     pygame.K_a: "turn -1",
 }
 USE_ACTIONS = KEYMAP.values() |> sorted |> list
-SET_REWARDS = {
+USE_REWARDS = {
     100: 1,
 }
 REWARD_POSITION = (
     {"x": 19.5, "z": 19.5},
-    gaussian_reward_closer$(scale=0.75, sigma=13),
+    gaussian_reward_closer$(scale=10, sigma=8),
 )
 REWARD_ANGLE = (
     19.5, 19.5,  # x, z
-    angle_reward_closer$(scale=0.25),
+    angle_reward_closer$(scale=1),
 )
-REWARD_OFFSET = (
+INITIAL_REWARD = (
     REWARD_POSITION[-1](
         np.array([0.5, 0.5]),
         np.array([19.5, 19.5]),
     )
-    + REWARD_ANGLE[-1](0, 90)
+    + REWARD_ANGLE[-1](0, 45)
 )
+REWARD_DELTA = True
 
 # Model constants:
 DOWNSAMPLE = 4
@@ -99,7 +100,7 @@ INPUT_SIZE = (
 # Training constants:
 NUM_STEPS = 1000*SCALE
 MEMORY_STEPS = 100*SCALE
-BOLTZMANN_TAU = 0.0875
+BOLTZMANN_TAU = 0.05
 RANDOM_START_STEPS = 5
 WARMUP_STEPS = 0
 TARGET_UPDATE_PERIOD = SCALE

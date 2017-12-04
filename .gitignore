@@ -110,12 +110,13 @@ ENV/
 *.py
 
 # Saved data and images
-saved_data/
 saved_images/
+saved_data/*
+!saved_data/play_memory.json
 
 # Saved weights
-saved_weights/
-!weights_final.h5f
+saved_weights/*
+!saved_weights/weights_final.h5f
 
 # FFMPEG
 ffmpeg.out

@@ -19,11 +19,12 @@ from minecraft_deep_learning.constants import (
     DEBUG,
     LOG_INTERVAL,
     DEBUG_LOG_INTERVAL,
-    SET_REWARDS,
+    USE_REWARDS,
     REWARD_POSITION,
     REWARD_ANGLE,
-    REWARD_OFFSET,
     IMAGES_DIR,
+    INITIAL_REWARD,
+    REWARD_DELTA
 )
 from minecraft_deep_learning.display import (
     create_screen,
@@ -40,24 +41,34 @@ class MinecraftProcessor(Processor):
         super(MinecraftProcessor, self).__init__()
         self.screen = None
         self.always_show_rewards = always_show_rewards
+        self.set_prev_reward()
         if use_display ?? DEBUG:
             self.counter = -1
             self.use_display()
 
     def use_display(self):
+        """Enable logging of observations to the screen."""
         if self.screen is None:
             self.screen_size = IMAGE_SIZE
             self.screen = create_screen(self.screen_size)
 
     def process_step(self, observation, reward, done, info):
+        """Process a step from the environment. Called by the agent."""
         if DEBUG:
             self.counter += 1
-        return (
+        processed_step = (
             self.process_observation(observation),
             self.process_reward(reward, info),
             done,
             self.process_info(info),
         )
+        if done:
+            self.set_prev_reward()
+        return processed_step
+
+    def set_prev_reward(self, reward=INITIAL_REWARD):
+        """Set the previous reward for computing reward deltas."""
+        self.prev_reward = reward
 
     def process_observation(self, observation):
         assert IMAGE_SIZE is not None and observation.shape == IMAGE_SIZE + (3 + OBSERVE_DEPTH,), observation.shape
@@ -127,47 +138,46 @@ class MinecraftProcessor(Processor):
         if self.show_rewards:
             reward_history = [(reward, None)]
 
-        if SET_REWARDS and reward in SET_REWARDS:
-            reward = SET_REWARDS[reward]
-            if self.show_rewards:
-                reward_history.append((reward, "set"))
+        reward = USE_REWARDS.get(reward, 0)
+        if self.show_rewards:
+            reward_history.append((reward, "using"))
 
-        else:
+        if not reward and info["observation"] is not None:
 
-            if REWARD_OFFSET:
-                reward -= REWARD_OFFSET
+            if REWARD_POSITION:
+                reward_coords, metric = REWARD_POSITION
+                x = np.asarray([
+                    info["observation"][coord.upper() + "Pos"]
+                    for coord in reward_coords |> sorted
+                ])
+                y = np.asarray([
+                    pos for coord, pos in reward_coords.items() |> sorted
+                ])
+                reward += metric(x, y)
                 if self.show_rewards:
-                    reward_history.append((reward, "offset"))
+                    reward_history.append((reward, "position {}".format({
+                        coord: x[i] for i, coord in reward_coords |> sorted |> enumerate
+                    })))
 
-            if info["observation"] is not None:
+            if REWARD_ANGLE:
+                desired_x, desired_z, metric = REWARD_ANGLE
+                x, z, raw_yaw = ("XPos", "ZPos", "Yaw") |> map$(info["observation"][])
+                # calculate yaw and desired_yaw to match up
+                yaw = (raw_yaw + 90) % 360
+                desired_yaw = (
+                    math.atan2(z - desired_z, x - desired_x) + math.pi
+                    |> math.degrees
+                )
+                reward += metric(yaw, desired_yaw)
+                if self.show_rewards:
+                    reward_history.append((reward, "got angle {}; desired angle {}".format(yaw, desired_yaw)))
 
-                if REWARD_POSITION:
-                    reward_coords, metric = REWARD_POSITION
-                    x = np.asarray([
-                        info["observation"][coord.upper() + "Pos"]
-                        for coord in reward_coords |> sorted
-                    ])
-                    y = np.asarray([
-                        pos for coord, pos in reward_coords.items() |> sorted
-                    ])
-                    reward += metric(x, y)
-                    if self.show_rewards:
-                        reward_history.append((reward, "position {}".format({
-                            coord: x[i] for i, coord in reward_coords |> sorted |> enumerate
-                        })))
-
-                if REWARD_ANGLE:
-                    desired_x, desired_z, metric = REWARD_ANGLE
-                    x, z, raw_yaw = ("XPos", "ZPos", "Yaw") |> map$(info["observation"][])
-                    # calculate yaw and desired_yaw to match up
-                    yaw = (raw_yaw + 90) % 360
-                    desired_yaw = (
-                        math.atan2(z - desired_z, x - desired_x) + math.pi
-                        |> math.degrees
-                    )
-                    reward += metric(yaw, desired_yaw)
-                    if self.show_rewards:
-                        reward_history.append((reward, "got angle {}; desired angle {}".format(yaw, desired_yaw)))
+            base_reward = reward
+            reward -= self.prev_reward
+            if REWARD_DELTA:
+                self.set_prev_reward(base_reward)
+            if self.show_rewards:
+                reward_history.append((reward, "{} from {}".format("delta" if REWARD_DELTA else "offset", base_reward)))
 
         if self.always_show_rewards or self.show_rewards and (
             self.counter % DEBUG_LOG_INTERVAL == 0
@@ -178,9 +188,9 @@ class MinecraftProcessor(Processor):
             for i in range(1, len(reward_history)):
                 reward_i, reason = reward_history[i]
                 reward_diff = reward_i - prev_reward
-                if reward_diff >= 0:
+                if reward_diff > 0:
                     reward_str += "\t+ {}".format(reward_diff)
-                else:
+                elif reward_diff < 0:
                     reward_str += "\t- {}".format(-reward_diff)
                 reward_str += " ({})".format(reason)
                 prev_reward = reward_i
