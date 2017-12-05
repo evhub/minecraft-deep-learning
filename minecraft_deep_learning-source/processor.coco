@@ -181,7 +181,7 @@ class MinecraftProcessor(Processor):
 
         if self.always_show_rewards or self.show_rewards and (
             self.counter % DEBUG_LOG_INTERVAL == 0
-            or any(abs(r) > 1 for r, why in reward_history)
+            or abs(reward) >= 1
         ):
             prev_reward = reward_history[0][0]
             reward_str = "reward: {}".format(prev_reward)

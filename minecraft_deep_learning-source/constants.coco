@@ -38,15 +38,15 @@ def angle_reward_closer(x, y, scale=1) =
 
 # Environment constants:
 ENV_NAME = "MinecraftDefaultFlat1-v0"
-RESET_WORLD = False
+RESET_WORLD = True
 IMAGE_SIZE = (288, 384)  # (height, width)
 OBSERVE_DEPTH = False
 CONTINUOUS_ACTIONS = True
 DISCRETE_ACTIONS = False
 KEYMAP = {
     pygame.K_w: "move 1",
-    pygame.K_d: "turn 1",
-    pygame.K_a: "turn -1",
+    pygame.K_a: "turn -0.625",
+    pygame.K_d: "turn 0.625",
 }
 USE_ACTIONS = KEYMAP.values() |> sorted |> list
 USE_REWARDS = {
@@ -59,7 +59,7 @@ POSITION_POTENTIAL = (
 )
 ANGLE_POTENTIAL = (
     19.5, 19.5,  # x, z
-    angle_reward_closer$(scale=1),
+    angle_reward_closer$(scale=1.25),
 )
 
 # Model constants:
@@ -94,7 +94,7 @@ INPUT_SIZE = (
 # Training constants:
 NUM_STEPS = 1000*SCALE
 MEMORY_STEPS = 100*SCALE
-BOLTZMANN_TAU = 0.25
+BOLTZMANN_TAU = 0.05
 RANDOM_START_STEPS = 5
 WARMUP_STEPS = 0
 TARGET_UPDATE_PERIOD = SCALE
