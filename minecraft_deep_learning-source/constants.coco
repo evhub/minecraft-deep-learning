@@ -38,7 +38,7 @@ def angle_reward_closer(x, y, scale=1) =
 
 # Environment constants:
 ENV_NAME = "MinecraftDefaultFlat1-v0"
-RESET_WORLD = True
+RESET_WORLD = False
 IMAGE_SIZE = (288, 384)  # (height, width)
 OBSERVE_DEPTH = False
 CONTINUOUS_ACTIONS = True
@@ -50,22 +50,16 @@ KEYMAP = {
 }
 USE_ACTIONS = KEYMAP.values() |> sorted |> list
 USE_REWARDS = {
-    100: 1,
+    100: 10,
 }
-REWARD_POSITION = (
+REWARD_POTENTIAL = 0.01
+POSITION_POTENTIAL = (
     {"x": 19.5, "z": 19.5},
-    gaussian_reward_closer$(scale=10, sigma=8),
+    gaussian_reward_closer$(scale=100, sigma=8),
 )
-REWARD_ANGLE = (
+ANGLE_POTENTIAL = (
     19.5, 19.5,  # x, z
-    angle_reward_closer$(scale=0.75),
-)
-INITIAL_REWARD = (
-    REWARD_POSITION[-1](
-        np.array([0.5, 0.5]),
-        np.array([19.5, 19.5]),
-    )
-    + REWARD_ANGLE[-1](0, 45)
+    angle_reward_closer$(scale=1),
 )
 
 # Model constants:
@@ -99,8 +93,8 @@ INPUT_SIZE = (
 
 # Training constants:
 NUM_STEPS = 1000*SCALE
-MEMORY_STEPS = 200*SCALE
-BOLTZMANN_TAU = 0.075
+MEMORY_STEPS = 100*SCALE
+BOLTZMANN_TAU = 0.25
 RANDOM_START_STEPS = 5
 WARMUP_STEPS = 0
 TARGET_UPDATE_PERIOD = SCALE
@@ -111,7 +105,7 @@ TARGET_UPDATE = (
     else TARGET_UPDATE_PERIOD
 )
 ESTIMATED_TIME = "{} mins".format(
-    0.03*MEMORY_STEPS + 0.05*NUM_STEPS
+    0.03*MEMORY_STEPS + 0.05*NUM_STEPS + (0.005*NUM_STEPS if RESET_WORLD else 0)
     |> -> _/60
     |> math.ceil
     |> int

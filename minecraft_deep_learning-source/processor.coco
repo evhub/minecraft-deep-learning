@@ -20,11 +20,11 @@ from minecraft_deep_learning.constants import (
     LOG_INTERVAL,
     DEBUG_LOG_INTERVAL,
     USE_REWARDS,
-    REWARD_POSITION,
-    REWARD_ANGLE,
+    POSITION_POTENTIAL,
+    ANGLE_POTENTIAL,
     IMAGES_DIR,
-    INITIAL_REWARD,
     DISCOUNT_GAMMA,
+    REWARD_POTENTIAL,
 )
 from minecraft_deep_learning.display import (
     create_screen,
@@ -66,7 +66,7 @@ class MinecraftProcessor(Processor):
             self.set_prev_potential()
         return processed_step
 
-    def set_prev_potential(self, reward=INITIAL_REWARD):
+    def set_prev_potential(self, reward=None):
         """Set the previous reward for computing reward deltas."""
         self.prev_potential = reward
 
@@ -143,9 +143,10 @@ class MinecraftProcessor(Processor):
             reward_history.append((reward, "using"))
 
         if not reward and info["observation"] is not None:
+            potential = 0
 
-            if REWARD_POSITION:
-                reward_coords, metric = REWARD_POSITION
+            if POSITION_POTENTIAL:
+                reward_coords, metric = POSITION_POTENTIAL
                 x = np.asarray([
                     info["observation"][coord.upper() + "Pos"]
                     for coord in reward_coords |> sorted
@@ -153,14 +154,14 @@ class MinecraftProcessor(Processor):
                 y = np.asarray([
                     pos for coord, pos in reward_coords.items() |> sorted
                 ])
-                reward += metric(x, y)
+                potential += metric(x, y)
                 if self.show_rewards:
-                    reward_history.append((reward, "position {}".format({
+                    reward_history.append((potential, "position {}".format({
                         coord: x[i] for i, coord in reward_coords |> sorted |> enumerate
                     })))
 
-            if REWARD_ANGLE:
-                desired_x, desired_z, metric = REWARD_ANGLE
+            if ANGLE_POTENTIAL:
+                desired_x, desired_z, metric = ANGLE_POTENTIAL
                 x, z, raw_yaw = ("XPos", "ZPos", "Yaw") |> map$(info["observation"][])
                 # calculate yaw and desired_yaw to match up
                 yaw = (raw_yaw + 90) % 360
@@ -168,15 +169,15 @@ class MinecraftProcessor(Processor):
                     math.atan2(z - desired_z, x - desired_x) + math.pi
                     |> math.degrees
                 )
-                reward += metric(yaw, desired_yaw)
+                potential += metric(yaw, desired_yaw)
                 if self.show_rewards:
-                    reward_history.append((reward, "got angle {}; desired angle {}".format(yaw, desired_yaw)))
+                    reward_history.append((potential, "got angle {}; desired angle {}".format(yaw, desired_yaw)))
 
-            new_potential = reward
-            reward = DISCOUNT_GAMMA*new_potential - self.prev_potential
-            self.set_prev_potential(new_potential)
+            if self.prev_potential is not None:
+                reward += (DISCOUNT_GAMMA + REWARD_POTENTIAL)*potential - self.prev_potential
+            self.set_prev_potential(potential)
             if self.show_rewards:
-                reward_history.append((reward, "reward shaping {}".format(new_potential)))
+                reward_history.append((reward, "reward shaping {}".format(potential)))
 
         if self.always_show_rewards or self.show_rewards and (
             self.counter % DEBUG_LOG_INTERVAL == 0
