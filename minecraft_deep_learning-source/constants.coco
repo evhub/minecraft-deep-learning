@@ -7,7 +7,7 @@ import pygame
 
 # Global constants:
 DEBUG = False
-SCALE = 1000
+SCALE = 100
 
 # Metrics:
 def reward_farther(x, y, scale=1, L=None) =
@@ -45,8 +45,8 @@ CONTINUOUS_ACTIONS = True
 DISCRETE_ACTIONS = False
 KEYMAP = {
     pygame.K_w: "move 1",
-    pygame.K_a: "turn -0.625",
-    pygame.K_d: "turn 0.625",
+    pygame.K_a: "turn -0.6",
+    pygame.K_d: "turn 0.6",
 }
 USE_ACTIONS = KEYMAP.values() |> sorted |> list
 USE_REWARDS = {
@@ -95,7 +95,7 @@ INPUT_SIZE = (
 NUM_STEPS = 1000*SCALE
 MEMORY_STEPS = 100*SCALE
 BOLTZMANN_TAU = 0.05
-RANDOM_START_STEPS = 5
+RANDOM_START_STEPS = 0
 WARMUP_STEPS = 0
 TARGET_UPDATE_PERIOD = SCALE
 SOFT_UPDATE_TARGET = False
