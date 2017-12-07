@@ -7,7 +7,7 @@ import pygame
 
 # Global constants:
 DEBUG = False
-SCALE = 100
+SCALE = 50
 
 # Metrics:
 def reward_farther(x, y, scale=1, L=None) =
@@ -45,21 +45,25 @@ CONTINUOUS_ACTIONS = True
 DISCRETE_ACTIONS = False
 KEYMAP = {
     pygame.K_w: "move 1",
-    pygame.K_a: "turn -0.6",
-    pygame.K_d: "turn 0.6",
+    pygame.K_a: "turn -0.55",
+    pygame.K_d: "turn 0.55",
 }
 USE_ACTIONS = KEYMAP.values() |> sorted |> list
 USE_REWARDS = {
     100: 10,
 }
-REWARD_POTENTIAL = 0.01
+REWARD_POTENTIAL = 1
 POSITION_POTENTIAL = (
     {"x": 19.5, "z": 19.5},
-    gaussian_reward_closer$(scale=100, sigma=8),
+    gaussian_reward_closer$(scale=0.95, sigma=8),
 )
 ANGLE_POTENTIAL = (
     19.5, 19.5,  # x, z
-    angle_reward_closer$(scale=1.25),
+    angle_reward_closer$(scale=0.05),
+)
+RECORD_MP4 = (
+    # 20,  # fps
+    # 400000,  # bit rate
 )
 
 # Model constants:
@@ -94,7 +98,7 @@ INPUT_SIZE = (
 # Training constants:
 NUM_STEPS = 1000*SCALE
 MEMORY_STEPS = 100*SCALE
-BOLTZMANN_TAU = 0.05
+BOLTZMANN_TAU = 0.25
 RANDOM_START_STEPS = 0
 WARMUP_STEPS = 0
 TARGET_UPDATE_PERIOD = SCALE
@@ -105,7 +109,7 @@ TARGET_UPDATE = (
     else TARGET_UPDATE_PERIOD
 )
 ESTIMATED_TIME = "{} mins".format(
-    0.03*MEMORY_STEPS + 0.05*NUM_STEPS + (0.005*NUM_STEPS if RESET_WORLD else 0)
+    0.03*MEMORY_STEPS + 0.05*NUM_STEPS
     |> -> _/60
     |> math.ceil
     |> int
@@ -114,7 +118,7 @@ ESTIMATED_TIME = "{} mins".format(
 # Main constants:
 LOG_INTERVAL = NUM_STEPS//20
 DEBUG_LOG_INTERVAL = LOG_INTERVAL//10
-TESTING_EPISODES = 10
+TESTING_EPISODES = 1
 
 BASE_DIR = (
     __file__

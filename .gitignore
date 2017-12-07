@@ -118,6 +118,5 @@ saved_data/*
 saved_weights/*
 !saved_weights/weights_final.h5f
 
-# FFMPEG
+# Saved video
 ffmpeg.out
-frame_info.txt

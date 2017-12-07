@@ -1,5 +1,5 @@
 # Imports:
-import os.path
+import os
 import argparse
 import shutil
 
@@ -157,3 +157,7 @@ def main(raw_args=None):
         run(args)
     finally:
         close_display()
+        try:
+            os.rmdir(os.path.join(BASE_DIR, "mission_records"))
+        except OSError:
+            pass
