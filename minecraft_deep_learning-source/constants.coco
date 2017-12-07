@@ -77,11 +77,11 @@ CONV_LAYERS = (
     (64, (4, 4), (2, 2)),
     (64, (3, 3), (1, 1)),
 )
-CONV_ACTIVATION = "elu"
+CONV_ACTIVATION = "relu"
 DENSE_LAYERS = (
     512,
 )
-DENSE_ACTIVATION = "elu"
+DENSE_ACTIVATION = "relu"
 MEMORY_SIZE = 400*SCALE
 DISCOUNT_GAMMA = 0.99
 DOUBLE_DQN = True
