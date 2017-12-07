@@ -17,19 +17,19 @@ def build_policies():
 
     if DEBUG:
         policy._counter = 0
-        policy._greedy_counter = 0
+        policy._min_counter = 0
         old_select_action = policy.select_action
         def policy.select_action(q_values):
             if policy._counter and policy._counter % LOG_INTERVAL == 0:
-                print("\neffective epsilon: {} (non-greedy {}/{} times)".format(
-                    (1 - policy._greedy_counter/policy._counter)/(len(USE_ACTIONS) - 1),
-                    policy._counter - policy._greedy_counter,
+                print("\neffective epsilon: {} (selected min {}/{} times)".format(
+                    policy._min_counter/policy._counter,
+                    policy._min_counter,
                     policy._counter,
                 ))
-            best_action = np.argmax(q_values)
+            min_action = np.argmin(q_values)
             action = old_select_action(q_values)
-            if action == best_action:
-                policy._greedy_counter += 1
+            if action == min_action:
+                policy._min_counter += 1
             policy._counter += 1
             return action
 

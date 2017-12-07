@@ -12,15 +12,14 @@ from minecraft_deep_learning.constants import (
     CONTINUOUS_ACTIONS,
     RESET_WORLD,
     DATA_DIR,
-    RECORD_MP4,
 )
 
 # Environment setup:
-def build_environment():
+def build_environment(recordMP4=None):
     """Build the Minecraft gym environment."""
     env = gym.make(ENV_NAME)
     record_dest = None
-    if RECORD_MP4:
+    if recordMP4:
         i = 0
         while record_dest is None or os.path.exists(record_dest):
             record_dest = os.path.join(DATA_DIR, "recorded_data_{}.tgz".format(i))
@@ -35,7 +34,7 @@ def build_environment():
         videoResolution=IMAGE_SIZE |> reversed |> tuple if IMAGE_SIZE is not None else None,
         videoWithDepth=OBSERVE_DEPTH,
         recordDestination=record_dest,
-        recordMP4=RECORD_MP4 if RECORD_MP4 else None,
+        recordMP4=recordMP4 if recordMP4 else None,
     )
     assert isinstance(env.action_space, gym.spaces.Discrete), env.action_space
     assert len(env.action_names) == 1 and len(env.action_spaces) == 1, (env.action_names, env.action_spaces)

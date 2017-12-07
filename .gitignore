@@ -109,10 +109,14 @@ ENV/
 # Compiled Coconut
 *.py
 
-# Saved data and images
-saved_images/
+# Saved data
 saved_data/*
 !saved_data/play_memory.json
+
+# Saved images
+saved_images/
+tmp/
+-p/
 
 # Saved weights
 saved_weights/*

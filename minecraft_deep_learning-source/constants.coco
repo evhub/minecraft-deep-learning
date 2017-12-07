@@ -7,7 +7,7 @@ import pygame
 
 # Global constants:
 DEBUG = False
-SCALE = 50
+SCALE = 100
 
 # Metrics:
 def reward_farther(x, y, scale=1, L=None) =
@@ -45,25 +45,22 @@ CONTINUOUS_ACTIONS = True
 DISCRETE_ACTIONS = False
 KEYMAP = {
     pygame.K_w: "move 1",
-    pygame.K_a: "turn -0.55",
-    pygame.K_d: "turn 0.55",
+    pygame.K_a: "turn -0.75",
+    pygame.K_d: "turn 0.75",
 }
 USE_ACTIONS = KEYMAP.values() |> sorted |> list
 USE_REWARDS = {
     100: 10,
 }
+# 0 for just reward shaping, positive for actual reward
 REWARD_POTENTIAL = 1
 POSITION_POTENTIAL = (
     {"x": 19.5, "z": 19.5},
-    gaussian_reward_closer$(scale=0.95, sigma=8),
+    gaussian_reward_closer$(scale=0.9, sigma=9),
 )
 ANGLE_POTENTIAL = (
     19.5, 19.5,  # x, z
-    angle_reward_closer$(scale=0.05),
-)
-RECORD_MP4 = (
-    # 20,  # fps
-    # 400000,  # bit rate
+    angle_reward_closer$(scale=0.1),
 )
 
 # Model constants:
@@ -119,6 +116,10 @@ ESTIMATED_TIME = "{} mins".format(
 LOG_INTERVAL = NUM_STEPS//20
 DEBUG_LOG_INTERVAL = LOG_INTERVAL//10
 TESTING_EPISODES = 1
+RECORD_MP4 = (
+    20,  # fps
+    400000,  # bit rate
+)
 
 BASE_DIR = (
     __file__

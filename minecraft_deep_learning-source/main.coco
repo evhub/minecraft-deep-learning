@@ -34,6 +34,7 @@ from minecraft_deep_learning.constants import (
     BASE_DIR,
     DATA_DIR,
     MEMORY_STEPS,
+    RECORD_MP4,
 )
 
 # Argument parser:
@@ -113,7 +114,7 @@ def run(args):
         elif args.mode == "test":
             agent = build_agent()
             agent.load_weights(args.weights)
-            env = build_environment()
+            env = build_environment(recordMP4=RECORD_MP4)
             agent.test(
                 env,
                 nb_episodes=TESTING_EPISODES,

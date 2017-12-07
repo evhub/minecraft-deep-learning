@@ -142,7 +142,7 @@ class MinecraftProcessor(Processor):
         if self.show_rewards:
             reward_history.append((reward, "using"))
 
-        if not reward and info["observation"] is not None:
+        if reward == 0 and (REWARD_POTENTIAL ?? False) is not False and info["observation"] is not None:
             potential = 0
 
             if POSITION_POTENTIAL:
