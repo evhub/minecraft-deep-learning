@@ -38,7 +38,7 @@ def angle_reward_closer(x, y, scale=1) =
 
 # Environment constants:
 ENV_NAME = "MinecraftDefaultFlat1-v0"
-RESET_WORLD = True
+RESET_WORLD = False
 IMAGE_SIZE = (288, 384)  # (height, width)
 OBSERVE_DEPTH = False
 CONTINUOUS_ACTIONS = True

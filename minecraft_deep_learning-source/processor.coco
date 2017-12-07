@@ -177,7 +177,7 @@ class MinecraftProcessor(Processor):
                 reward += (DISCOUNT_GAMMA + REWARD_POTENTIAL)*potential - self.prev_potential
             self.set_prev_potential(potential)
             if self.show_rewards:
-                reward_history.append((reward, "reward shaping {}".format(potential)))
+                reward_history.append((reward, "reward shaping {} - {}".format(potential, self.prev_potential)))
 
         if self.always_show_rewards or self.show_rewards and (
             self.counter % DEBUG_LOG_INTERVAL == 0
