@@ -120,3 +120,4 @@ saved_weights/*
 
 # Saved video
 ffmpeg.out
+mission_records/
